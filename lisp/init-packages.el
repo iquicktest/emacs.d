@@ -51,7 +51,7 @@
 
 
 ;; add smartparens config 
-(require 'smartparens-config)
+(smartparens-global-mode t)
 
 
 
@@ -64,13 +64,6 @@
 ;; highlight global line
 (global-hl-line-mode t)
 (require 'recentf)
-
-
-
-;; 显示行号
-(global-linum-mode 1)
-
-
 
 ;; 开启全局 Company 补全
 (global-company-mode 1)

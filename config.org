@@ -1,0 +1,623 @@
+# +TITLE: Jerryzhao's Emacs.d Configuration
+* Introduction
+I use all these below configuration for my daily working. 
+
+
+* Init All Packages
+
+
+** package manangement
+#+BEGIN_SRC emacs-lisp 
+
+(require 'cl)
+(require 'package)
+(add-to-list 'package-archives (cons "melpa" "http://melpa.org/packages/") t)
+
+(eval-when-compile
+  ;; Following line is not needed if use-package.el is in ~/.emacs.d
+  (require 'use-package))
+
+#+END_SRC
+
+** Add package that you want to install before launch your emacs
+#+BEGIN_SRC emacs-lisp
+
+;; Add Packages
+(defvar my/packages '( 
+                ;; --- Auto-completion ---
+                company
+                flx
+                wgrep
+                rg
+                dumb-jump
+		diminish
+                anaconda-mode
+                smart-mode-line
+                company-anaconda
+                google-c-style
+                highlight-indent-guides
+                ;; --- Better Editor ---
+                hungry-delete
+                swiper
+		projectile
+		flycheck
+                counsel
+                smartparens
+		meghanada
+		magit
+                ;; --- Major Mode ---
+                js2-mode
+		expand-region
+		popwin
+		use-package
+		multi-term
+		counsel-projectile
+                ;; --- Minor Mode ---
+                nodejs-repl
+                exec-path-from-shell
+                ;; --- Themes ---
+                gruvbox-theme
+                ;; solarized-theme
+                ) "Default packages")
+
+(setq package-selected-packages my/packages)
+
+(defun my/packages-installed-p ()
+     (loop for pkg in my/packages
+           when (not (package-installed-p pkg)) do (return nil)
+           finally (return t)))
+
+(unless (my/packages-installed-p)
+     (message "%s" "Refreshing package database...")
+     (package-refresh-contents)
+     (dolist (pkg my/packages)
+       (when (not (package-installed-p pkg))
+         (package-install pkg))))
+
+;; Find Executable Path on OS X
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
+
+#+END_SRC
+
+
+
+
+
+* better defaults
+** Help 
+#+BEGIN_SRC emacs-lisp
+;; jump file
+(global-set-key (kbd "C-h C-f") 'find-function)
+(global-set-key (kbd "C-h C-v") 'find-variable)
+(global-set-key (kbd "C-h C-k") 'find-function-on-key)
+
+#+END_SRC
+
+** Quick Open Configuration
+#+BEGIN_SRC emacs-lisp
+;; 快速打开配置文件
+(defun open-init-file()
+  (interactive)
+  (find-file "~/.emacs.d/config.org"))
+
+(global-set-key (kbd "<f2>") 'open-init-file)
+#+END_SRC
+** Hungry-delete.el - hungry delete minor mode
+#+BEGIN_SRC emacs-lisp
+
+(require 'hungry-delete)
+(global-hungry-delete-mode)
+
+#+END_SRC
+
+** Font
+#+BEGIN_SRC emacs-lisp
+(setq default-frame-alist '((font . "Iosevka-16")))
+#+END_SRC
+
+** Auto Revert
+Often when switching git branches, files tend to change. By default,
+Emacs does not revert the buffers affected, which can lead to some
+confusion. Turn on =auto-revert-mode= globally, so that when the files
+change, the buffers reflect the latest editions as well.
+
+NOTE: This can be quite slow, when the changes are massive across
+branches.
+
+#+BEGIN_SRC emacs-lisp
+
+  (diminish 'auto-revert-mode)
+  (global-auto-revert-mode 1)
+
+#+END_SRC
+
+
+** Use y/n over yes/no
+y/n is easier to type than yes/no
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+** Add smartparens config
+#+BEGIN_SRC emacs-lisp
+(smartparens-global-mode t)
+
+#+END_SRC
+
+
+** popwin config
+#+BEGIN_SRC emacs-lisp
+
+(require 'popwin)
+(popwin-mode t)
+#+END_SRC
+
+
+** highlight global line
+#+BEGIN_SRC emacs-lisp
+
+(global-hl-line-mode t)
+
+#+END_SRC
+
+
+** recentf config
+#+BEGIN_SRC emacs-lisp
+
+(require 'recentf)
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
+#+END_SRC
+
+
+** company mode config
+#+BEGIN_SRC emacs-lisp
+
+(global-company-mode 1)
+;; change company C-n C-p to adjust up and down
+(with-eval-after-load 'company
+  (define-key company-active-map (kbd "M-n") nil)
+  (define-key company-active-map (kbd "M-p") nil)
+  (define-key company-active-map (kbd "C-n") #'company-select-next)
+  (define-key company-active-map (kbd "C-p") #'company-select-previous))
+
+#+END_SRC
+
+
+** Ivy config
+Ivy is generic completion frontend for Emacs. Ivy is more efficient,
+simpler and more customizable.
+*** flx
+Flx is required for fuzzy-matching.
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package flx)
+#+end_src
+*** Counsel
+Counsel contains ivy enhancements for commonly-used functions.
+#+begin_src emacs-lisp :tangle yes
+  (use-package counsel
+    :diminish ivy-mode
+    :bind
+    (("C-c C-r" . ivy-resume)
+     ("M-x" . counsel-M-x)
+     ("C-c i" . counsel-menu)
+     ("C-x b" . ivy-switch-buffer)
+     ("C-x B" . ivy-switch-buffer-other-window)
+     ("C-x k" . kill-buffer)
+     ("C-x C-f" . counsel-find-file)
+     ("C-x j" . counsel-dired-jump)
+     ("C-x l" . counsel-locate)
+     ;; git file
+     ("C-c j" . counsel-git)
+     ;; get recentf 
+     ("C-c f" . counsel-recentf)
+     ("M-y" . counsel-yank-pop)
+     :map help-map
+     ("f" . counsel-describe-function)
+     ("v" . counsel-describe-variable)
+     ("l" . counsel-info-lookup-symbol)
+     :map ivy-minibuffer-map
+     ("C-d" . ivy-dired)
+     ("C-o" . ivy-occur)
+     ("<return>" . ivy-alt-done)
+     ("M-<return>" . ivy-immediate-done)
+     :map read-expression-map
+     ("C-r" . counsel-expression-history))
+    :init
+    (add-hook 'after-init-hook 'ivy-mode)
+    :config
+    (setq counsel-find-file-at-point t)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-display-style 'fancy)
+    (setq ivy-initial-inputs-alist nil)
+    (setq ivy-use-selectable-prompt t)
+    (setq ivy-re-builders-alist
+          '((ivy-switch-buffer . ivy--regex-plus)
+            (swiper . ivy--regex-plus)
+            (t . ivy--regex-fuzzy))) 
+    (ivy-set-actions
+     t
+     '(("I" insert "insert")))
+    (ivy-set-occur 'ivy-switch-buffer 'ivy-switch-buffer-occur))
+   #+end_src
+*** Swiper
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package swiper
+    :bind
+    (("C-s" . swiper)
+     ("C-r" . swiper)
+     ("C-c C-s" . counsel-grep-or-swiper)
+     :map swiper-map
+     ("M-q" . swiper-query-replace)
+     ("C-l". swiper-recenter-top-bottom)
+     ("C-." . swiper-mc)
+     ("C-'" . swiper-avy))
+    :config
+    (setq counsel-grep-swiper-limit 20000)
+    (setq counsel-grep-base-command
+          "rg -i -M 120 --no-heading --line-number --color never '%s' %s"))
+#+END_SRC
+*** wgrep
+    wgrep allows you to edit a grep buffer and apply those changes to the
+    file buffer.
+
+    #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package wgrep)
+    #+END_SRC
+*** rg
+    #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package rg
+    :bind* (("M-s" . rg)))
+    #+END_SRC
+
+** load theme
+#+BEGIN_SRC emacs-lisp
+(load-theme 'gruvbox-dark-medium 1)
+#+END_SRC
+
+
+** swap meta and super key 
+#+BEGIN_SRC emacs-lisp
+;; swap meta and super key and change swith language
+(setq mac-option-modifier 'super)
+(setq mac-command-modifier 'meta)
+#+END_SRC
+
+
+** Replace region when type
+
+Type over a selected region, instead of deleting before typing
+#+BEGIN_SRC emacs-lisp
+;; swap meta and super key and change swith language
+(delete-selection-mode 1)
+#+END_SRC
+
+
+** UI Settings
+#+BEGIN_SRC emacs-lisp
+;; 显示行号
+(global-linum-mode 1)
+
+;; turn on nyan mode
+(nyan-mode 1)
+
+;; hide tool bar
+(tool-bar-mode -1)
+(custom-set-faces
+ '(mode-line ((t (:background "#2B2B2B" :foreground "#DCDCCC" :box (:line-width 4 :color "#2B2B2B"))))))
+;; turn on full screen 
+(setq initial-frame-alist (quote ((fullscreen . maximized))))
+
+;; 关闭启动帮助画面
+(setq inhibit-splash-screen 1)
+
+;; 关闭文件滑动控件
+(scroll-bar-mode -1)
+
+;; 更改显示字体大小 16pt
+;; http://stackoverflow.com/questions/294664/how-to-set-the-font-size-in-emacs
+(set-face-attribute 'default nil :height 145)
+
+(put 'scroll-left 'disabled nil)
+
+#+END_SRC
+
+
+
+
+** turn off backup file
+#+BEGIN_SRC emacs-lisp
+
+;; turn off backup files
+(setq make-backup-files nil)
+
+#+END_SRC
+
+** Add hook for elisp
+
+#+BEGIN_SRC emacs-lisp
+
+;; Add hook for elisp
+(add-hook 'emacs-lisp-mode-hook 'show-paren-mode)
+(define-advice show-paren-function (:around (fn) fix-show-paren-function)
+  "Highlight enclosing parens."
+  (cond ((looking-at-p "\\s(") (funcall fn))
+	(t (save-excursion
+	     (ignore-errors (backward-up-list))
+	     (funcall fn)))))
+
+#+END_SRC
+
+   
+* Editing Text
+
+** expand-region
+
+#+BEGIN_SRC emacs-lisp
+(use-package expand-region
+  :bind (("C-=" . er/expand-region)))
+#+END_SRC
+   
+
+** jump to definition
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :bind (("M-g o" . dumb-jump-go-other-window)
+         ("M-g j" . dumb-jump-go)
+         ("M-g i" . dumb-jump-go-prompt)
+         ("M-g x" . dumb-jump-go-prefer-external)
+         ("M-g z" . dumb-jump-go-prefer-external-other-window))
+  :config (setq dumb-jump-selector 'ivy))
+#+END_SRC
+
+* Project Management
+  
+
+** Projectile
+
+#+BEGIN_SRC emacs-lisp
+  ;; projectile config
+  (use-package projectile
+    ;; show only the project name in mode line
+    :delight '(:eval (concat " " (projectile-project-name)))
+    :init
+    (add-hook 'after-init-hook 'projectile-mode)
+    :config
+    (setq projectile-enable-caching t)
+    ;; https://emacs.stackexchange.com/questions/32634/how-can-the-list-of-projects-used-by-projectile-be-manually-updated/3
+    (when (require 'magit nil t)
+      (mapc #'projectile-add-known-project
+            (mapcar #'file-name-as-directory (magit-list-repos)))
+      ;; Optionally persist
+      (projectile-save-known-projects))
+    (use-package counsel-projectile
+      :bind (("C-c b" . counsel-projectile-switch-to-buffer)
+             ("C-c s" . counsel-projectile-rg)))
+    ;; use git grep to ignore files
+    (setq projectile-use-git-grep t)
+    ;; use ivy as completion system
+    (setq projectile-completion-system 'ivy))
+#+END_SRC
+
+* Modeline
+** Smart mode line
+#+BEGIN_SRC emacs-lisp
+(use-package smart-mode-line
+  :init
+  (add-hook 'after-init-hook 'sml/setup)
+  :config 
+  (setq sml/theme 'respectful)
+  (setq sml/name-width 44)
+  (setq sml/shorten-directory t)
+  (setq sml/shorten-modes nil)
+  (setq sml/mode-width 'full)
+  (setq sml/replacer-regexp-list
+        '(("^~/\\.emacs\\.d/" ":ED:"))))
+#+END_SRC
+
+* Languages
+
+** Language Servers
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package lsp-mode
+  :config
+  (require 'lsp-imenu)
+  (add-hook 'lsp-after-open-hook 'lsp-enable-imenu))
+
+(use-package lsp-ui
+  :after lsp-mode
+  :init
+  (add-hook 'lsp-mode-hook #'lsp-ui-mode)
+  :config
+  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
+
+(use-package company-lsp
+  :after company lsp-mode
+  :config
+  (add-to-list 'company-backends 'company-lsp))
+
+
+#+END_SRC
+
+
+** Go
+#+BEGIN_SRC emacs-lisp
+
+(use-package go-mode
+  :mode ("\\.go\\'" . go-mode)
+  :config
+  (add-hook 'go-mode-hook 'compilation-auto-quit-window)
+  (add-hook 'go-mode-hook (lambda ()
+                            (set (make-local-variable 'company-backends) '(company-go))
+                            (company-mode)))
+  (add-hook 'go-mode-hook (lambda ()
+                            (add-hook 'before-save-hook 'gofmt-before-save)
+                            (local-set-key (kbd "M-.") 'godef-jump)))
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (unless (file-exists-p "Makefile")
+                (set (make-local-variable 'compile-command)
+                     (let ((file (file-name-nondirectory buffer-file-name)))
+                       (format "go build %s"
+                               file))))))
+  (use-package go-dlv
+    :config (require 'go-dlv))
+  (use-package golint
+    :config
+    (add-to-list 'load-path (concat (getenv "GOPATH")  "/src/github.com/golang/lint/misc/emacs"))
+    (require 'golint))
+  (use-package gorepl-mode
+    :config (add-hook 'go-mode-hook #'gorepl-mode))
+  (use-package company-go
+    :config (add-hook 'go-mode-hook (lambda ()
+                                      (set (make-local-variable 'company-backends) '(company-go))
+                                      (company-mode)))))
+
+#+END_SRC 
+
+
+
+** Python
+
+#+BEGIN_SRC emacs-lisp
+
+
+(eval-after-load "python-mode"
+  (lambda ()
+    (setq python-remove-cwd-from-path t)))
+
+(use-package anaconda-mode
+  :init
+  (add-hook 'python-mode-hook 'anaconda-mode)
+  (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+
+(use-package company-anaconda
+  :config
+  (eval-after-load "company"
+    '(add-to-list 'company-backends '(company-anaconda))))
+
+(use-package pytest
+  :bind (:map python-mode-map
+              ("C-c a" . pytest-all)
+              ("C-c m" . pytest-module)
+              ("C-c ." . pytest-one)
+              ("C-c d" . pytest-directory)
+              ("C-c p a" . pytest-pdb-all)
+              ("C-c p m" . pytest-pdb-module)
+              ("C-c p ." . pytest-pdb-one)))
+
+(use-package highlight-indent-guides
+  :init
+  (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
+  :config
+  (setq highlight-indent-guides-method 'character))
+
+(use-package isend-mode
+  :bind
+  (:map isend-mode-map
+        ("C-M-e" . isend-send-defun))
+  :init
+  (add-hook 'isend-mode-hook 'isend-default-python-setup))
+#+END_SRC
+
+
+** Java
+
+*** Google C Style
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package google-c-style
+  :commands
+  (google-set-c-style))
+
+#+END_SRC
+
+*** Meghanada
+#+BEGIN_SRC emacs-lisp
+
+;; java configurations
+(require 'meghanada)
+(add-hook 'java-mode-hook
+          (lambda ()
+            ;; meghanada-mode oon
+            (google-set-c-style)
+            (google-make-newline-indent)
+            (meghanada-mode t)
+            (flycheck-mode +1)
+            (setq c-basic-offset 2)
+            ;; use code format
+            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
+(cond
+   ((eq system-type 'windows-nt)
+    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
+    (setq meghanada-maven-path "mvn.cmd"))
+   (t
+    (setq meghanada-java-path "java")
+    (setq meghanada-maven-path "mvn")))
+
+
+
+#+END_SRC
+
+
+** Markdown
+
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :mode ("\\.md\\'" . markdown-mode)
+  :commands (markdown-mode gfm-mode)
+  :init
+  (setq markdown-fontify-code-blocks-natively t)
+  :config 
+  (setq markdown-command "multimarkdown --snippet --smart --notes"
+        markdown-enable-wiki-links t
+        markdown-indent-on-enter 'indent-and-new-item
+        markdown-asymmetric-header t
+        markdown-live-preview-delete-export 'delete-on-destroy))
+#+END_SRC
+
+* Org Mode
+
+#+BEGIN_SRC emacs-lisp
+;; org configuation
+(require 'org)
+
+(setq org-src-fontify-natively t)
+;; 设置默认 Org Agenda 文件目录
+(setq org-agenda-files '("~/org"))
+;; 设置 org-agenda 打开快捷键
+(global-set-key (kbd "C-c a") 'org-agenda)
+
+#+END_SRC
+
+* Custom
+#+BEGIN_SRC emacs-lisp
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-idle-delay 0.01)
+ '(company-meghanada-prefix-length 2)
+ '(company-minimum-prefix-length 1)
+ '(custom-safe-themes
+   (quote
+    ("6ac7c0f959f0d7853915012e78ff70150bfbe2a69a1b703c3ac4184f9ae3ae02" "c3d4af771cbe0501d5a865656802788a9a0ff9cf10a7df704ec8b8efj69017c68" default)))
+ '(package-selected-packages
+   (quote
+    (company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+#+END_SRC
