@@ -13,9 +13,6 @@ I use all these below configuration for my daily working.
 (require 'package)
 (add-to-list 'package-archives (cons "melpa" "http://melpa.org/packages/") t)
 
-(eval-when-compile
-  ;; Following line is not needed if use-package.el is in ~/.emacs.d
-  (require 'use-package))
 
 #+END_SRC
 
@@ -27,12 +24,17 @@ I use all these below configuration for my daily working.
                 ;; --- Auto-completion ---
                 company
                 flx
+                restclient
+                hydra
+                diff-hl
+                swift-mode
                 wgrep
                 rg
                 dumb-jump
 		diminish
                 anaconda-mode
                 smart-mode-line
+                company-restclient
                 company-anaconda
                 google-c-style
                 highlight-indent-guides
@@ -77,6 +79,10 @@ I use all these below configuration for my daily working.
 ;; Find Executable Path on OS X
 (when (memq window-system '(mac ns))
   (exec-path-from-shell-initialize))
+
+(eval-when-compile
+  ;; Following line is not needed if use-package.el is in ~/.emacs.d
+  (require 'use-package))
 
 #+END_SRC
 
@@ -145,15 +151,6 @@ y/n is easier to type than yes/no
 (smartparens-global-mode t)
 
 #+END_SRC
-
-
-** popwin config
-#+BEGIN_SRC emacs-lisp
-
-(require 'popwin)
-(popwin-mode t)
-#+END_SRC
-
 
 ** highlight global line
 #+BEGIN_SRC emacs-lisp
@@ -373,33 +370,112 @@ Type over a selected region, instead of deleting before typing
   :config (setq dumb-jump-selector 'ivy))
 #+END_SRC
 
+* Git
+#+BEGIN_SRC emacs-lisp
+;; diff-hl config
+(use-package diff-hl
+  :config
+  (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode))
+
+(use-package smerge-mode
+  :bind (("C-c m" . jethro/hydra-smerge/body))
+  :init
+  (progn
+    (defun jethro/enable-smerge-maybe ()
+      "Auto-enable `smerge-mode' when merge conflict is detected."
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "^<<<<<<< " nil :noerror)
+          (smerge-mode 1))))
+    (add-hook 'find-file-hook #'jethro/enable-smerge-maybe :append))
+  :config 
+  (defalias 'smerge-keep-upper 'smerge-keep-mine)
+  (defalias 'smerge-keep-lower 'smerge-keep-other)
+  (defalias 'smerge-diff-base-upper 'smerge-diff-base-mine)
+  (defalias 'smerge-diff-upper-lower 'smerge-diff-mine-other)
+  (defalias 'smerge-diff-base-lower 'smerge-diff-base-other)
+
+  (defhydra jethro/hydra-smerge (:color pink
+                                        :hint nil
+                                        :pre (smerge-mode 1)
+                                        ;; Disable `smerge-mode' when quitting hydra if
+                                        ;; no merge conflicts remain.
+                                        :post (smerge-auto-leave))
+    "
+   ^Move^       ^Keep^               ^Diff^                 ^Other^
+   ^^-----------^^-------------------^^---------------------^^-------
+   _n_ext       _b_ase               _<_: upper/base        _C_ombine
+   _p_rev       _u_pper              _=_: upper/lower       _r_esolve
+   ^^           _l_ower              _>_: base/lower        _k_ill current
+   ^^           _a_ll                _R_efine
+   ^^           _RET_: current       _E_diff
+   "
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("q" nil "cancel" :color blue)))
+#+END_SRC
+
+* Tools
+
+** Rest Client
+
+#+BEGIN_SRC emacs-lisp
+;; restclient
+(use-package restclient
+  :config
+  (eval-after-load "restclient"
+    '(add-to-list 'company-backends 'company-restclient)))
+
+#+END_SRC
+
 * Project Management
-  
 
 ** Projectile
 
 #+BEGIN_SRC emacs-lisp
-  ;; projectile config
-  (use-package projectile
-    ;; show only the project name in mode line
-    :delight '(:eval (concat " " (projectile-project-name)))
-    :init
-    (add-hook 'after-init-hook 'projectile-mode)
-    :config
-    (setq projectile-enable-caching t)
-    ;; https://emacs.stackexchange.com/questions/32634/how-can-the-list-of-projects-used-by-projectile-be-manually-updated/3
-    (when (require 'magit nil t)
-      (mapc #'projectile-add-known-project
-            (mapcar #'file-name-as-directory (magit-list-repos)))
-      ;; Optionally persist
-      (projectile-save-known-projects))
-    (use-package counsel-projectile
-      :bind (("C-c b" . counsel-projectile-switch-to-buffer)
-             ("C-c s" . counsel-projectile-rg)))
-    ;; use git grep to ignore files
-    (setq projectile-use-git-grep t)
-    ;; use ivy as completion system
-    (setq projectile-completion-system 'ivy))
+    ;; projectile config
+    (use-package projectile
+      ;; show only the project name in mode line
+      :delight '(:eval (concat " " (projectile-project-name)))
+      :init
+      (add-hook 'after-init-hook 'projectile-mode)
+      :config
+      (setq projectile-enable-caching t)
+      ;; https://emacs.stackexchange.com/questions/32634/how-can-the-list-of-projects-used-by-projectile-be-manually-updated/3
+      (when (require 'magit nil t)
+        (mapc #'projectile-add-known-project
+              (mapcar #'file-name-as-directory (magit-list-repos)))
+        ;; Optionally persist
+        (projectile-save-known-projects))
+      (use-package counsel-projectile
+        :bind (("C-c b" . counsel-projectile-switch-to-buffer)
+               ("C-c s" . counsel-projectile-rg)))
+      ;; use git grep to ignore files
+      (setq projectile-use-git-grep t)
+      ;; use ivy as completion system
+      (setq projectile-completion-system 'ivy))
+
+  (eval-after-load "projectile"
+    '(setq magit-repository-directories (mapcar #'directory-file-name
+                                                (cl-remove-if-not (lambda (project)
+                                                                    (file-directory-p (concat project "/.git/")))
+                                                                  (projectile-relevant-known-projects)))
+
+           magit-repository-directories-depth 1))
 #+END_SRC
 
 * Modeline
@@ -410,9 +486,9 @@ Type over a selected region, instead of deleting before typing
   (add-hook 'after-init-hook 'sml/setup)
   :config 
   (setq sml/theme 'respectful)
-  (setq sml/name-width 44)
+  (setq sml/name-width 24)
   (setq sml/shorten-directory t)
-  (setq sml/shorten-modes nil)
+  (setq sml/shorten-modes t)
   (setq sml/mode-width 'full)
   (setq sml/replacer-regexp-list
         '(("^~/\\.emacs\\.d/" ":ED:"))))
@@ -488,42 +564,43 @@ Type over a selected region, instead of deleting before typing
 #+BEGIN_SRC emacs-lisp
 
 
-(eval-after-load "python-mode"
-  (lambda ()
-    (setq python-remove-cwd-from-path t)))
+  (eval-after-load "python-mode"
+    (lambda ()
+      (setq python-remove-cwd-from-path t)))
 
-(use-package anaconda-mode
-  :init
-  (add-hook 'python-mode-hook 'anaconda-mode)
-  (add-hook 'python-mode-hook 'anaconda-eldoc-mode))
+  (use-package anaconda-mode
+    :init
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+    :bind (("M-," . anaconda-mode-go-back)))
 
-(use-package company-anaconda
-  :config
-  (eval-after-load "company"
-    '(add-to-list 'company-backends '(company-anaconda))))
+  (use-package company-anaconda
+    :config
+    (eval-after-load "company"
+      '(add-to-list 'company-backends '(company-anaconda))))
 
-(use-package pytest
-  :bind (:map python-mode-map
-              ("C-c a" . pytest-all)
-              ("C-c m" . pytest-module)
-              ("C-c ." . pytest-one)
-              ("C-c d" . pytest-directory)
-              ("C-c p a" . pytest-pdb-all)
-              ("C-c p m" . pytest-pdb-module)
-              ("C-c p ." . pytest-pdb-one)))
+  (use-package pytest
+    :bind (:map python-mode-map
+                ("C-c a" . pytest-all)
+                ("C-c m" . pytest-module)
+                ("C-c ." . pytest-one)
+                ("C-c d" . pytest-directory)
+                ("C-c p a" . pytest-pdb-all)
+                ("C-c p m" . pytest-pdb-module)
+                ("C-c p ." . pytest-pdb-one)))
 
-(use-package highlight-indent-guides
-  :init
-  (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
-  :config
-  (setq highlight-indent-guides-method 'character))
+  (use-package highlight-indent-guides
+    :init
+    (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
+    :config
+    (setq highlight-indent-guides-method 'character))
 
-(use-package isend-mode
-  :bind
-  (:map isend-mode-map
-        ("C-M-e" . isend-send-defun))
-  :init
-  (add-hook 'isend-mode-hook 'isend-default-python-setup))
+  (use-package isend-mode
+    :bind
+    (:map isend-mode-map
+          ("C-M-e" . isend-send-defun))
+    :init
+    (add-hook 'isend-mode-hook 'isend-default-python-setup))
 #+END_SRC
 
 
@@ -582,7 +659,7 @@ Type over a selected region, instead of deleting before typing
         markdown-asymmetric-header t
         markdown-live-preview-delete-export 'delete-on-destroy))
 #+END_SRC
-
+   
 * Org Mode
 
 #+BEGIN_SRC emacs-lisp
@@ -597,27 +674,3 @@ Type over a selected region, instead of deleting before typing
 
 #+END_SRC
 
-* Custom
-#+BEGIN_SRC emacs-lisp
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-idle-delay 0.01)
- '(company-meghanada-prefix-length 2)
- '(company-minimum-prefix-length 1)
- '(custom-safe-themes
-   (quote
-    ("6ac7c0f959f0d7853915012e78ff70150bfbe2a69a1b703c3ac4184f9ae3ae02" "c3d4af771cbe0501d5a865656802788a9a0ff9cf10a7df704ec8b8efj69017c68" default)))
- '(package-selected-packages
-   (quote
-    (company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-#+END_SRC
