@@ -25,9 +25,15 @@ I use all these below configuration for my daily working.
                 company
                 flx
                 restclient
+                company-lsp
+                lsp-java
+                evil
                 hydra
+                yaml-mode
                 diff-hl
+                pdf-tools
                 swift-mode
+                elfeed
                 wgrep
                 rg
                 dumb-jump
@@ -89,7 +95,7 @@ I use all these below configuration for my daily working.
 
 
 
-
+   
 * better defaults
 ** Help 
 #+BEGIN_SRC emacs-lisp
@@ -238,6 +244,7 @@ Counsel contains ivy enhancements for commonly-used functions.
      t
      '(("I" insert "insert")))
     (ivy-set-occur 'ivy-switch-buffer 'ivy-switch-buffer-occur))
+    (setq counsel-rg-base-command "rg -S --no-heading --line-number --color never %s . | cut -c -200")
    #+end_src
 *** Swiper
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -348,6 +355,26 @@ Type over a selected region, instead of deleting before typing
 
 #+END_SRC
 
+
+** Scroll other window
+#+BEGIN_SRC emacs-lisp
+
+
+  (defun scroll-other-window-up ()
+    "Scroll the other window one line up."
+    (interactive)
+    (scroll-other-window -1)
+  )
+  (defun scroll-other-window-down ()
+    "Scroll the other window one line down."
+    (interactive)
+    (scroll-other-window 1)
+  )
+  (global-set-key (kbd "C-,") 'scroll-other-window-up)
+  (global-set-key (kbd "C-.") 'scroll-other-window-down)
+
+
+#+END_SRC
    
 * Editing Text
 
@@ -428,7 +455,7 @@ Type over a selected region, instead of deleting before typing
     ("k" smerge-kill-current)
     ("q" nil "cancel" :color blue)))
 #+END_SRC
-
+  
 * Tools
 
 ** Rest Client
@@ -439,6 +466,14 @@ Type over a selected region, instead of deleting before typing
   :config
   (eval-after-load "restclient"
     '(add-to-list 'company-backends 'company-restclient)))
+
+#+END_SRC
+
+
+** RSS
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-x w") 'elfeed)
+;; Somewhere in your .emacs file
 
 #+END_SRC
 
@@ -618,27 +653,29 @@ Type over a selected region, instead of deleting before typing
 
 *** Meghanada
 #+BEGIN_SRC emacs-lisp
+(require 'lsp-java)
+(add-hook 'java-mode-hook #'lsp-java-enable)
+
 
 ;; java configurations
-(require 'meghanada)
-(add-hook 'java-mode-hook
-          (lambda ()
-            ;; meghanada-mode oon
-            (google-set-c-style)
-            (google-make-newline-indent)
-            (meghanada-mode t)
-            (flycheck-mode +1)
-            (setq c-basic-offset 2)
-            ;; use code format
-            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
-(cond
-   ((eq system-type 'windows-nt)
-    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
-    (setq meghanada-maven-path "mvn.cmd"))
-   (t
-    (setq meghanada-java-path "java")
-    (setq meghanada-maven-path "mvn")))
-
+;;(require 'meghanada)
+;;(add-hook 'java-mode-hook
+;;          (lambda ()
+;;            ;; meghanada-mode oon
+;;            (google-set-c-style)
+;;            (google-make-newline-indent)
+;;            (meghanada-mode t)
+;;            (flycheck-mode +1)
+;;            (setq c-basic-offset 2)
+;;            ;; use code format
+;;            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
+;;(cond
+;;   ((eq system-type 'windows-nt)
+;;    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
+;;    (setq meghanada-maven-path "mvn.cmd"))
+;;   (t
+;;    (setq meghanada-java-path "java")
+;;    (setq meghanada-maven-path "mvn")))
 
 
 #+END_SRC
@@ -660,6 +697,14 @@ Type over a selected region, instead of deleting before typing
         markdown-live-preview-delete-export 'delete-on-destroy))
 #+END_SRC
    
+
+** YAML
+#+BEGIN_SRC emacs-lisp
+(require 'yaml-mode)
+    (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+
+#+END_SRC
+
 * Org Mode
 
 #+BEGIN_SRC emacs-lisp
@@ -671,6 +716,34 @@ Type over a selected region, instead of deleting before typing
 (setq org-agenda-files '("~/org"))
 ;; 设置 org-agenda 打开快捷键
 (global-set-key (kbd "C-c a") 'org-agenda)
+(org-babel-do-load-languages
+    'org-babel-load-languages '((python . t) (R . t)))
+
+#+END_SRC
+* Evil Mode
+#+BEGIN_SRC emacs-lisp
+
+  (evil-mode t)
+  (setcdr evil-insert-state-map nil)
+  (define-key evil-insert-state-map [escape] 'evil-normal-state)
+  (global-evil-leader-mode)
+  (evil-leader/set-key
+    "h" 'evil-window-left
+    "j" 'evil-window-down
+    "l" 'evil-window-right
+    "k" 'evil-window-up
+    "ff" 'find-file
+    "pd" 'counsel-projectile-find-dir
+    "pf" 'counsel-projectile-find-file
+    "pb" 'counsel-projectile-switch-to-buffer
+    "ps" 'counsel-projectile-rg
+    "wv" 'split-window-right
+    "ws" 'split-window-below
+    "w>" 'evil-window-increase-width
+    "w<" 'evil-window-decrease-width
+    "w+" 'evil-window-increase-height
+    "w-" 'evil-window-decrease-height
+    ) 
 
 #+END_SRC
 
