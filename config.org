@@ -25,8 +25,6 @@ I use all these below configuration for my daily working.
                 company
                 flx
                 restclient
-                company-lsp
-                lsp-java
                 evil
                 hydra
                 yaml-mode
@@ -653,29 +651,27 @@ Type over a selected region, instead of deleting before typing
 
 *** Meghanada
 #+BEGIN_SRC emacs-lisp
-(require 'lsp-java)
-(add-hook 'java-mode-hook #'lsp-java-enable)
-
 
 ;; java configurations
-;;(require 'meghanada)
-;;(add-hook 'java-mode-hook
-;;          (lambda ()
-;;            ;; meghanada-mode oon
-;;            (google-set-c-style)
-;;            (google-make-newline-indent)
-;;            (meghanada-mode t)
-;;            (flycheck-mode +1)
-;;            (setq c-basic-offset 2)
-;;            ;; use code format
-;;            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
-;;(cond
-;;   ((eq system-type 'windows-nt)
-;;    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
-;;    (setq meghanada-maven-path "mvn.cmd"))
-;;   (t
-;;    (setq meghanada-java-path "java")
-;;    (setq meghanada-maven-path "mvn")))
+(require 'meghanada)
+(add-hook 'java-mode-hook
+          (lambda ()
+            ;; meghanada-mode oon
+            (google-set-c-style)
+            (google-make-newline-indent)
+            (meghanada-mode t)
+            (flycheck-mode t)))
+            (setq c-basic-offset 2)
+            ;; use code format
+            ;;(add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
+
+(cond
+   ((eq system-type 'windows-nt)
+    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
+    (setq meghanada-maven-path "mvn.cmd"))
+   (t
+    (setq meghanada-java-path "java")
+    (setq meghanada-maven-path "mvn")))
 
 
 #+END_SRC
@@ -744,6 +740,4 @@ Type over a selected region, instead of deleting before typing
     "w+" 'evil-window-increase-height
     "w-" 'evil-window-decrease-height
     ) 
-
 #+END_SRC
-
