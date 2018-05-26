@@ -2,12 +2,10 @@
 * Introduction
 I use all these below configuration for my daily working. 
 
-
 * Init All Packages
 
-
 ** package manangement
-#+BEGIN_SRC emacs-lisp 
+#+BEGIN_SRC emacs-lisp
 
 (require 'cl)
 (require 'package)
@@ -19,66 +17,6 @@ I use all these below configuration for my daily working.
 ** Add package that you want to install before launch your emacs
 #+BEGIN_SRC emacs-lisp
 
-;; Add Packages
-(defvar my/packages '( 
-                ;; --- Auto-completion ---
-                company
-                flx
-                restclient
-                evil
-                hydra
-                yaml-mode
-                diff-hl
-                pdf-tools
-                swift-mode
-                elfeed
-                wgrep
-                rg
-                dumb-jump
-		diminish
-                anaconda-mode
-                smart-mode-line
-                company-restclient
-                company-anaconda
-                google-c-style
-                highlight-indent-guides
-                ;; --- Better Editor ---
-                hungry-delete
-                swiper
-		projectile
-		flycheck
-                counsel
-                smartparens
-		meghanada
-		magit
-                ;; --- Major Mode ---
-                js2-mode
-		expand-region
-		popwin
-		use-package
-		multi-term
-		counsel-projectile
-                ;; --- Minor Mode ---
-                nodejs-repl
-                exec-path-from-shell
-                ;; --- Themes ---
-                gruvbox-theme
-                ;; solarized-theme
-                ) "Default packages")
-
-(setq package-selected-packages my/packages)
-
-(defun my/packages-installed-p ()
-     (loop for pkg in my/packages
-           when (not (package-installed-p pkg)) do (return nil)
-           finally (return t)))
-
-(unless (my/packages-installed-p)
-     (message "%s" "Refreshing package database...")
-     (package-refresh-contents)
-     (dolist (pkg my/packages)
-       (when (not (package-installed-p pkg))
-         (package-install pkg))))
 
 ;; Find Executable Path on OS X
 (when (memq window-system '(mac ns))
@@ -88,12 +26,19 @@ I use all these below configuration for my daily working.
   ;; Following line is not needed if use-package.el is in ~/.emacs.d
   (require 'use-package))
 
+(setq use-package-always-ensure t)
+
+#+END_SRC
+** load env
+#+BEGIN_SRC emacs-lisp
+
+;; load $PATH env variable into emacs
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "GOPATH"))
+
 #+END_SRC
 
-
-
-
-   
 * better defaults
 ** Help 
 #+BEGIN_SRC emacs-lisp
@@ -106,12 +51,11 @@ I use all these below configuration for my daily working.
 
 ** Quick Open Configuration
 #+BEGIN_SRC emacs-lisp
-;; 快速打开配置文件
-(defun open-init-file()
-  (interactive)
-  (find-file "~/.emacs.d/config.org"))
-
-(global-set-key (kbd "<f2>") 'open-init-file)
+  ;; open init file
+  (defun open-init-file()
+    (interactive)
+    (find-file "~/.emacs.d/config.org"))
+  (global-set-key (kbd "<f2>") 'open-init-file)
 #+END_SRC
 ** Hungry-delete.el - hungry delete minor mode
 #+BEGIN_SRC emacs-lisp
@@ -146,21 +90,74 @@ branches.
 ** Use y/n over yes/no
 y/n is easier to type than yes/no
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
 ** Add smartparens config
 #+BEGIN_SRC emacs-lisp
-(smartparens-global-mode t)
+(use-package smartparens-config
+    :ensure smartparens
+    :config
+    (progn
+      (show-smartparens-global-mode t)))
+
+(add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+(add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+
+(bind-keys
+ :map smartparens-mode-map
+ ("C-M-a" . sp-beginning-of-sexp)
+ ("C-M-e" . sp-end-of-sexp)
+
+ ("C-<down>" . sp-down-sexp)
+ ("C-<up>"   . sp-up-sexp)
+ ("M-<down>" . sp-backward-down-sexp)
+ ("M-<up>"   . sp-backward-up-sexp)
+
+ ("C-M-f" . sp-forward-sexp)
+ ("C-M-b" . sp-backward-sexp)
+
+ ("C-M-n" . sp-next-sexp)
+ ("C-M-p" . sp-previous-sexp)
+
+ ("C-S-f" . sp-forward-symbol)
+ ("C-S-b" . sp-backward-symbol)
+
+ ("C-<right>" . sp-forward-slurp-sexp)
+ ("M-<right>" . sp-forward-barf-sexp)
+ ("C-<left>"  . sp-backward-slurp-sexp)
+ ("M-<left>"  . sp-backward-barf-sexp)
+
+ ("C-M-t" . sp-transpose-sexp)
+ ("C-M-k" . sp-kill-sexp)
+ ("C-k"   . sp-kill-hybrid-sexp)
+ ("M-k"   . sp-backward-kill-sexp)
+ ("C-M-w" . sp-copy-sexp)
+ ("C-M-d" . delete-sexp)
+
+ ("M-<backspace>" . backward-kill-word)
+ ("C-<backspace>" . sp-backward-kill-word)
+ ([remap sp-backward-kill-word] . backward-kill-word)
+
+ ("M-[" . sp-backward-unwrap-sexp)
+ ("M-]" . sp-unwrap-sexp)
+
+ ("C-x C-t" . sp-transpose-hybrid-sexp)
+
+ ("C-c ("  . wrap-with-parens)
+ ("C-c ["  . wrap-with-brackets)
+ ("C-c {"  . wrap-with-braces)
+ ("C-c '"  . wrap-with-single-quotes)
+ ("C-c \"" . wrap-with-double-quotes)
+ ("C-c _"  . wrap-with-underscores)
+ ("C-c `"  . wrap-with-back-quotes))
 
 #+END_SRC
 
 ** highlight global line
 #+BEGIN_SRC emacs-lisp
-
 (global-hl-line-mode t)
-
 #+END_SRC
 
 
@@ -278,6 +275,15 @@ Counsel contains ivy enhancements for commonly-used functions.
 ** load theme
 #+BEGIN_SRC emacs-lisp
 (load-theme 'gruvbox-dark-medium 1)
+;;(require 'doom-themes)
+;;
+;;;; Global settings (defaults)
+;;(setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+;;      doom-themes-enable-italic t) ; if nil, italics is universally disabled
+;;
+;;;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
+;;;; may have their own settings.
+;;(load-theme 'doom-dracula t)
 #+END_SRC
 
 
@@ -301,7 +307,7 @@ Type over a selected region, instead of deleting before typing
 ** UI Settings
 #+BEGIN_SRC emacs-lisp
 ;; 显示行号
-(global-linum-mode 1)
+(global-linum-mode -1)
 
 ;; turn on nyan mode
 (nyan-mode 1)
@@ -373,9 +379,39 @@ Type over a selected region, instead of deleting before typing
 
 
 #+END_SRC
-   
-* Editing Text
+** flycheck
+#+BEGIN_SRC emacs-lisp
 
+;; flycheck config
+(use-package flycheck
+  :diminish flycheck-mode
+  :init (global-flycheck-mode)
+  (add-hook 'after-init-hook #'global-flycheck-mode)
+  :config
+  (setq flycheck-highlighting-mode 'lines))
+
+#+END_SRC
+** ace-window
+#+BEGIN_SRC emacs-lisp
+(use-package ace-window
+  :config
+  (setq aw-swap-invert t))
+
+#+END_SRC
+
+** golden ratio
+
+#+BEGIN_SRC emacs-lisp
+
+;;(use-package golden-ratio
+;;  :diminish golden-ratio-mode
+;;  :init
+;;  (add-hook 'after-init-hook 'golden-ratio-mode)
+;;  :config
+;;  (add-to-list 'golden-ratio-extra-commands 'ace-window))
+
+#+END_SRC
+* Editing Text
 ** expand-region
 
 #+BEGIN_SRC emacs-lisp
@@ -383,7 +419,6 @@ Type over a selected region, instead of deleting before typing
   :bind (("C-=" . er/expand-region)))
 #+END_SRC
    
-
 ** jump to definition
 #+BEGIN_SRC emacs-lisp
 (use-package dumb-jump
@@ -392,15 +427,53 @@ Type over a selected region, instead of deleting before typing
          ("M-g i" . dumb-jump-go-prompt)
          ("M-g x" . dumb-jump-go-prefer-external)
          ("M-g z" . dumb-jump-go-prefer-external-other-window))
-  :config (setq dumb-jump-selector 'ivy))
+  :config (setq dumb-jump-selector 'ivy)
+          (setq dumb-jump-force-searcher 'rg))
 #+END_SRC
 
+** Make TAB work
+#+BEGIN_SRC emacs-lisp
+
+(setq tab-always-indent 'complete)
+
+#+END_SRC
+
+** ace-jump-mode
+#+BEGIN_SRC emacs-lisp
+
+(use-package avy
+  :ensure t
+  :bind ("C-;" . avy-goto-char)
+  :bind ("M-g l" . avy-goto-line))
+
+#+END_SRC
+** indent 
+#+BEGIN_SRC emacs-lisp
+;; aggressive-indent config
+(use-package aggressive-indent
+  :diminish aggressive-indent-mode
+  :init
+  (add-hook 'after-init-hook 'aggressive-indent-global-mode))
+
+#+END_SRC
+* Font size auto adjust
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-M-0")
+                  '(lambda () (interactive)
+                     (global-text-scale-adjust (- text-scale-mode-amount))
+                     (global-text-scale-mode -1)))
+  (global-set-key (kbd "M-=")
+                  'text-scale-increase)
+  (global-set-key (kbd "M--")
+                  'text-scale-decrease)
+#+END_SRC
 * Git
 #+BEGIN_SRC emacs-lisp
 ;; diff-hl config
 (use-package diff-hl
   :config
-  (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode))
+  (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode)
+  (add-hook 'vc-dir-mode-hook 'turn-on-diff-hl-mode))
 
 (use-package smerge-mode
   :bind (("C-c m" . jethro/hydra-smerge/body))
@@ -460,10 +533,10 @@ Type over a selected region, instead of deleting before typing
 
 #+BEGIN_SRC emacs-lisp
 ;; restclient
-(use-package restclient
-  :config
-  (eval-after-load "restclient"
-    '(add-to-list 'company-backends 'company-restclient)))
+;;(use-package restclient
+;;  :config
+;;  (eval-after-load "restclient"
+;;    '(add-to-list 'company-backends 'company-restclient)))
 
 #+END_SRC
 
@@ -518,13 +591,44 @@ Type over a selected region, instead of deleting before typing
   :init
   (add-hook 'after-init-hook 'sml/setup)
   :config 
-  (setq sml/theme 'respectful)
+  ;;(setq sml/theme 'respectful)
   (setq sml/name-width 24)
   (setq sml/shorten-directory t)
   (setq sml/shorten-modes t)
   (setq sml/mode-width 'full)
   (setq sml/replacer-regexp-list
         '(("^~/\\.emacs\\.d/" ":ED:"))))
+  (rich-minority-mode 1)
+
+(defmacro diminish-minor-mode (filename mode &optional abbrev)
+  `(eval-after-load (symbol-name ,filename)
+     '(diminish ,mode ,abbrev)))
+
+(defmacro diminish-major-mode (mode-hook abbrev)
+  `(add-hook ,mode-hook
+             (lambda () (setq mode-name ,abbrev))))
+
+(diminish-minor-mode 'abbrev 'abbrev-mode)
+(diminish-minor-mode 'simple 'auto-fill-function)
+(diminish-minor-mode 'company 'company-mode)
+(diminish-minor-mode 'eldoc 'eldoc-mode)
+(diminish-minor-mode 'flycheck 'flycheck-mode)
+(diminish-minor-mode 'flyspell 'flyspell-mode)
+(diminish-minor-mode 'global-whitespace 'global-whitespace-mode)
+(diminish-minor-mode 'projectile 'projectile-mode)
+(diminish-minor-mode 'ruby-end 'ruby-end-mode)
+(diminish-minor-mode 'subword 'subword-mode)
+(diminish-minor-mode 'undo-tree 'undo-tree-mode)
+(diminish-minor-mode 'yard-mode 'yard-mode)
+(diminish-minor-mode 'yasnippet 'yas-minor-mode)
+(diminish-minor-mode 'wrap-region 'wrap-region-mode)
+
+(diminish-minor-mode 'paredit 'paredit-mode " π")
+
+(diminish-major-mode 'emacs-lisp-mode-hook "el")
+(diminish-major-mode 'haskell-mode-hook "λ=")
+(diminish-major-mode 'lisp-interaction-mode-hook "λ")
+(diminish-major-mode 'python-mode-hook "Py")
 #+END_SRC
 
 * Languages
@@ -586,7 +690,16 @@ Type over a selected region, instead of deleting before typing
   (use-package company-go
     :config (add-hook 'go-mode-hook (lambda ()
                                       (set (make-local-variable 'company-backends) '(company-go))
-                                      (company-mode)))))
+                                      (company-mode))))
+)
+
+(define-derived-mode protobuf-mode c-mode
+  "Protocol Buffer" "Major mode for editing Google Protocol Buffer files."
+  (setq fill-column 80
+          tab-width 4))
+
+(add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
+(provide 'protobuf)
 
 #+END_SRC 
 
@@ -659,7 +772,7 @@ Type over a selected region, instead of deleting before typing
             ;; meghanada-mode oon
             (google-set-c-style)
             (google-make-newline-indent)
-            (meghanada-mode t)
+            ;;(meghanada-mode t)
             (flycheck-mode t)))
             (setq c-basic-offset 2)
             ;; use code format
@@ -701,21 +814,51 @@ Type over a selected region, instead of deleting before typing
 
 #+END_SRC
 
+
+** JSON 
+#+BEGIN_SRC emacs-lisp
+
+(require 'json-mode)
+
+#+END_SRC
+** PDF
+
+#+BEGIN_SRC emacs-lisp
+;; pdf
+
+#+END_SRC
+   
+** Swift
+#+BEGIN_SRC emacs-lisp
+
+;;(require 'company-sourcekit)
+;;(add-to-list 'company-backends 'company-sourcekit)
+(eval-after-load 'flycheck '(flycheck-swift-setup))
+(setq flycheck-swift-sdk-path "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.2.sdk")
+;; ↑ Select the appropriate SDK version you use
+(setq flycheck-swift-target "arm64-apple-ios11")
+
+#+END_SRC
 * Org Mode
 
 #+BEGIN_SRC emacs-lisp
 ;; org configuation
+
 (require 'org)
 
 (setq org-src-fontify-natively t)
 ;; 设置默认 Org Agenda 文件目录
-(setq org-agenda-files '("~/org"))
+(setq org-agenda-files '("~/Dropbox/org/"))
 ;; 设置 org-agenda 打开快捷键
 (global-set-key (kbd "C-c a") 'org-agenda)
 (org-babel-do-load-languages
     'org-babel-load-languages '((python . t) (R . t)))
 
+(require 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
 #+END_SRC
+
 * Evil Mode
 #+BEGIN_SRC emacs-lisp
 
@@ -724,10 +867,6 @@ Type over a selected region, instead of deleting before typing
   (define-key evil-insert-state-map [escape] 'evil-normal-state)
   (global-evil-leader-mode)
   (evil-leader/set-key
-    "h" 'evil-window-left
-    "j" 'evil-window-down
-    "l" 'evil-window-right
-    "k" 'evil-window-up
     "ff" 'find-file
     "pd" 'counsel-projectile-find-dir
     "pf" 'counsel-projectile-find-file
@@ -735,9 +874,112 @@ Type over a selected region, instead of deleting before typing
     "ps" 'counsel-projectile-rg
     "wv" 'split-window-right
     "ws" 'split-window-below
-    "w>" 'evil-window-increase-width
-    "w<" 'evil-window-decrease-width
-    "w+" 'evil-window-increase-height
-    "w-" 'evil-window-decrease-height
+    "ww" 'ace-window
+    "wd" 'ace-delete-window
+    "wm" 'ace-maximize-window
     ) 
 #+END_SRC
+
+* W3M Browser
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "~/.emacs.d/vendor/emacs-w3m/")
+(require 'w3m-load)
+#+END_SRC
+* Auto YASnippets
+#+BEGIN_SRC emacs-lisp
+
+(global-set-key (kbd "C-c r") #'aya-create)
+(global-set-key (kbd "C-c e") #'aya-expand)
+
+#+END_SRC
+* NEO Tree
+  :PROPERTIES:
+  :ORDERED:  t
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;(require 'neotree)
+;;(global-set-key [f8] 'neotree-toggle)
+;;(setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+;;(use-package all-the-icons)
+;;
+;;;;Every time when the neotree window is opened, let it find current file and jump to node.
+;;(setq neo-smart-open t)
+;;(setq projectile-switch-project-action 'neotree-projectile-action)
+;;
+;;(evil-define-key 'normal neotree-mode-map (kbd "o") 'neotree-enter)
+;;(evil-define-key 'normal neotree-mode-map (kbd "SPC") 'neotree-quick-look)
+;;(evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
+;;(evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
+(require 'dired-x)
+(global-set-key [f8] 'mhj/toggle-project-explorer)
+
+(use-package dired-subtree
+  :demand
+  :bind
+  (:map dired-mode-map
+    ("<enter>" . mhj/dwim-toggle-or-open)
+    ("<return>" . mhj/dwim-toggle-or-open)
+    ("<tab>" . mhj/dwim-toggle-or-open)
+    ("<down-mouse-1>" . mhj/mouse-dwim-to-toggle-or-open))
+  :config
+  (progn
+    ;; Function to customize the line prefixes (I simply indent the lines a bit)
+    (setq dired-subtree-line-prefix (lambda (depth) (make-string (* 2 depth) ?\s)))
+    (setq dired-subtree-use-backgrounds nil)))
+
+(defun mhj/dwim-toggle-or-open ()
+  "Toggle subtree or open the file."
+  (interactive)
+  (if (file-directory-p (dired-get-file-for-visit))
+      (progn
+    (dired-subtree-toggle)
+    (revert-buffer))
+    (dired-find-file)))
+
+(defun mhj/mouse-dwim-to-toggle-or-open (event)
+  "Toggle subtree or the open file on mouse-click in dired."
+  (interactive "e")
+  (let* ((window (posn-window (event-end event)))
+     (buffer (window-buffer window))
+     (pos (posn-point (event-end event))))
+    (progn
+      (with-current-buffer buffer
+    (goto-char pos)
+    (mhj/dwim-toggle-or-open)))))
+
+(use-package dired
+  :ensure nil
+  :config
+  (progn
+    (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls")
+    (setq dired-listing-switches "-lXGh --group-directories-first")
+    (add-hook 'dired-mode-hook 'dired-omit-mode)
+    (add-hook 'dired-mode-hook 'dired-hide-details-mode)))
+
+(defun mhj/toggle-project-explorer ()
+  "Toggle the project explorer window."
+  (interactive)
+  (let* ((buffer (dired-noselect (projectile-project-root)))
+    (window (get-buffer-window buffer)))
+    (if window
+    (mhj/hide-project-explorer)
+      (mhj/show-project-explorer))))
+
+(defun mhj/show-project-explorer ()
+  "Project dired buffer on the side of the frame.
+Shows the projectile root folder using dired on the left side of
+the frame and makes it a dedicated window for that buffer."
+  (let ((buffer (dired-noselect (projectile-project-root))))
+    (progn
+      (display-buffer-in-side-window buffer '((side . left) (window-width . 0.2)))
+      (set-window-dedicated-p (get-buffer-window buffer) t))))
+
+(defun mhj/hide-project-explorer ()
+  "Hide the project-explorer window."
+  (let ((buffer (dired-noselect (projectile-project-root))))
+    (progn
+      (delete-window (get-buffer-window buffer))
+      (kill-buffer buffer))))
+#+END_SRC
+
+
