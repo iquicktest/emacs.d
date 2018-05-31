@@ -18,7 +18,8 @@
  '(nyan-bar-length 20)
  '(package-selected-packages
    (quote
-    (bongo company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme))))
+    (org-bullets org bongo company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme)))
+ '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

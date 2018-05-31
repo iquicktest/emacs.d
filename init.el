@@ -6,7 +6,8 @@
 
 (package-initialize)
 ;; This is only needed once, near the top of the file
-(org-babel-load-file (concat user-emacs-directory "config.org"))
+(org-babel-load-file (expand-file-name "~/.emacs.d/config.org"))
 (put 'dired-find-alternate-file 'disabled nil)
+
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file)

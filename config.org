@@ -102,7 +102,7 @@ y/n is easier to type than yes/no
     (progn
       (show-smartparens-global-mode t)))
 
-(add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+;;(add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
 (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
 
 (bind-keys
@@ -403,12 +403,12 @@ Type over a selected region, instead of deleting before typing
 
 #+BEGIN_SRC emacs-lisp
 
-;;(use-package golden-ratio
-;;  :diminish golden-ratio-mode
-;;  :init
-;;  (add-hook 'after-init-hook 'golden-ratio-mode)
-;;  :config
-;;  (add-to-list 'golden-ratio-extra-commands 'ace-window))
+(use-package golden-ratio
+  :diminish golden-ratio-mode
+  :init
+  (add-hook 'after-init-hook 'golden-ratio-mode)
+  :config
+  (add-to-list 'golden-ratio-extra-commands 'ace-window))
 
 #+END_SRC
 * Editing Text
@@ -448,7 +448,9 @@ Type over a selected region, instead of deleting before typing
 
 #+END_SRC
 ** indent 
+
 #+BEGIN_SRC emacs-lisp
+
 ;; aggressive-indent config
 (use-package aggressive-indent
   :diminish aggressive-indent-mode
@@ -825,6 +827,14 @@ Type over a selected region, instead of deleting before typing
 
 #+BEGIN_SRC emacs-lisp
 ;; pdf
+(use-package pdf-tools
+  :ensure t
+  :config
+  (custom-set-variables
+    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
+(pdf-tools-install)
+
 
 #+END_SRC
    
@@ -877,7 +887,7 @@ Type over a selected region, instead of deleting before typing
     "ww" 'ace-window
     "wd" 'ace-delete-window
     "wm" 'ace-maximize-window
-    ) 
+    )
 #+END_SRC
 
 * W3M Browser
