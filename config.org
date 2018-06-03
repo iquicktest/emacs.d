@@ -274,7 +274,8 @@ Counsel contains ivy enhancements for commonly-used functions.
 
 ** load theme
 #+BEGIN_SRC emacs-lisp
-(load-theme 'gruvbox-dark-medium 1)
+(load-theme 'hc-zenburn 1)
+;;(load-theme 'zenburn 1)
 ;;(require 'doom-themes)
 ;;
 ;;;; Global settings (defaults)
@@ -314,8 +315,6 @@ Type over a selected region, instead of deleting before typing
 
 ;; hide tool bar
 (tool-bar-mode -1)
-(custom-set-faces
- '(mode-line ((t (:background "#2B2B2B" :foreground "#DCDCCC" :box (:line-width 4 :color "#2B2B2B"))))))
 ;; turn on full screen 
 (setq initial-frame-alist (quote ((fullscreen . maximized))))
 
@@ -324,6 +323,7 @@ Type over a selected region, instead of deleting before typing
 
 ;; 关闭文件滑动控件
 (scroll-bar-mode -1)
+(tooltip-mode -1)
 
 ;; 更改显示字体大小 16pt
 ;; http://stackoverflow.com/questions/294664/how-to-set-the-font-size-in-emacs
@@ -411,6 +411,17 @@ Type over a selected region, instead of deleting before typing
   (add-to-list 'golden-ratio-extra-commands 'ace-window))
 
 #+END_SRC
+
+** rainbow stuff
+#+BEGIN_SRC emacs-lisp
+(use-package rainbow-delimiters
+  :init
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
+(use-package rainbow-identifiers
+  :init
+  (add-hook 'prog-mode-hook 'rainbow-identifiers-mode))
+
+#+END_SRC
 * Editing Text
 ** expand-region
 
@@ -452,10 +463,10 @@ Type over a selected region, instead of deleting before typing
 #+BEGIN_SRC emacs-lisp
 
 ;; aggressive-indent config
-(use-package aggressive-indent
-  :diminish aggressive-indent-mode
-  :init
-  (add-hook 'after-init-hook 'aggressive-indent-global-mode))
+;;(use-package aggressive-indent
+;;  :diminish aggressive-indent-mode
+;;  :init
+;;  (add-hook 'after-init-hook 'aggressive-indent-global-mode))
 
 #+END_SRC
 * Font size auto adjust
@@ -551,7 +562,7 @@ Type over a selected region, instead of deleting before typing
 #+END_SRC
 
 * Project Management
-
+  
 ** Projectile
 
 #+BEGIN_SRC emacs-lisp
@@ -593,14 +604,13 @@ Type over a selected region, instead of deleting before typing
   :init
   (add-hook 'after-init-hook 'sml/setup)
   :config 
-  ;;(setq sml/theme 'respectful)
+  (setq sml/theme 'respectful)
   (setq sml/name-width 24)
   (setq sml/shorten-directory t)
   (setq sml/shorten-modes t)
   (setq sml/mode-width 'full)
   (setq sml/replacer-regexp-list
         '(("^~/\\.emacs\\.d/" ":ED:"))))
-  (rich-minority-mode 1)
 
 (defmacro diminish-minor-mode (filename mode &optional abbrev)
   `(eval-after-load (symbol-name ,filename)
@@ -631,6 +641,8 @@ Type over a selected region, instead of deleting before typing
 (diminish-major-mode 'haskell-mode-hook "λ=")
 (diminish-major-mode 'lisp-interaction-mode-hook "λ")
 (diminish-major-mode 'python-mode-hook "Py")
+
+
 #+END_SRC
 
 * Languages
@@ -711,46 +723,39 @@ Type over a selected region, instead of deleting before typing
 
 #+BEGIN_SRC emacs-lisp
 
+    (elpy-enable)
+    (setq elpy-rpc-python-command "python3")
+    (eval-after-load "python-mode"
+      (lambda ()
+        (setq python-remove-cwd-from-path t)))
 
-  (eval-after-load "python-mode"
-    (lambda ()
-      (setq python-remove-cwd-from-path t)))
+    ;; ipython setting
+    (setq python-shell-interpreter "ipython"
+	python-shell-interpreter-args "-i --simple-prompt")
 
-  (use-package anaconda-mode
-    :init
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-    :bind (("M-," . anaconda-mode-go-back)))
+    (use-package pytest
+      :bind (:map python-mode-map
+                  ("C-c a" . pytest-all)
+                  ("C-c m" . pytest-module)
+                  ("C-c ." . pytest-one)
+                  ("C-c d" . pytest-directory)
+                  ("C-c p a" . pytest-pdb-all)
+                  ("C-c p m" . pytest-pdb-module)
+                  ("C-c p ." . pytest-pdb-one)))
 
-  (use-package company-anaconda
-    :config
-    (eval-after-load "company"
-      '(add-to-list 'company-backends '(company-anaconda))))
+   ;; (use-package highlight-indent-guides
+   ;;   :init
+   ;;   (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
+   ;;   :config
+   ;;   (setq highlight-indent-guides-method 'character))
 
-  (use-package pytest
-    :bind (:map python-mode-map
-                ("C-c a" . pytest-all)
-                ("C-c m" . pytest-module)
-                ("C-c ." . pytest-one)
-                ("C-c d" . pytest-directory)
-                ("C-c p a" . pytest-pdb-all)
-                ("C-c p m" . pytest-pdb-module)
-                ("C-c p ." . pytest-pdb-one)))
-
-  (use-package highlight-indent-guides
-    :init
-    (add-hook 'python-mode-hook 'highlight-indent-guides-mode)
-    :config
-    (setq highlight-indent-guides-method 'character))
-
-  (use-package isend-mode
-    :bind
-    (:map isend-mode-map
-          ("C-M-e" . isend-send-defun))
-    :init
-    (add-hook 'isend-mode-hook 'isend-default-python-setup))
+    (use-package isend-mode
+      :bind
+      (:map isend-mode-map
+            ("C-M-e" . isend-send-defun))
+      :init
+      (add-hook 'isend-mode-hook 'isend-default-python-setup))
 #+END_SRC
-
 
 ** Java
 
@@ -774,11 +779,14 @@ Type over a selected region, instead of deleting before typing
             ;; meghanada-mode oon
             (google-set-c-style)
             (google-make-newline-indent)
-            ;;(meghanada-mode t)
-            (flycheck-mode t)))
+            (meghanada-mode t)
+            (smartparens-mode t)
+            (rainbow-delimiters-mode t)
+            (flycheck-mode t) 
+            (highlight-symbol-mode t)
             (setq c-basic-offset 2)
             ;; use code format
-            ;;(add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
+            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
 
 (cond
    ((eq system-type 'windows-nt)
@@ -787,6 +795,11 @@ Type over a selected region, instead of deleting before typing
    (t
     (setq meghanada-java-path "java")
     (setq meghanada-maven-path "mvn")))
+
+;;(use-package lsp-java
+;;  :after lsp-mode
+;;  :init
+;;  (add-hook 'java-mode-hook 'lsp-java-enable))
 
 
 #+END_SRC
@@ -822,7 +835,7 @@ Type over a selected region, instead of deleting before typing
 
 (require 'json-mode)
 
-#+END_SRC
+#+END_SRC  
 ** PDF
 
 #+BEGIN_SRC emacs-lisp
@@ -907,19 +920,6 @@ Type over a selected region, instead of deleting before typing
   :ORDERED:  t
   :END:
 #+BEGIN_SRC emacs-lisp
-;;(require 'neotree)
-;;(global-set-key [f8] 'neotree-toggle)
-;;(setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-;;(use-package all-the-icons)
-;;
-;;;;Every time when the neotree window is opened, let it find current file and jump to node.
-;;(setq neo-smart-open t)
-;;(setq projectile-switch-project-action 'neotree-projectile-action)
-;;
-;;(evil-define-key 'normal neotree-mode-map (kbd "o") 'neotree-enter)
-;;(evil-define-key 'normal neotree-mode-map (kbd "SPC") 'neotree-quick-look)
-;;(evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
-;;(evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
 (require 'dired-x)
 (global-set-key [f8] 'mhj/toggle-project-explorer)
 
