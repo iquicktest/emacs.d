@@ -1,6 +1,25 @@
 # +TITLE: Jerryzhao's Emacs.d Configuration
 * Introduction
 I use all these below configuration for my daily working. 
+* Org Mode
+
+#+BEGIN_SRC emacs-lisp
+;; org configuation
+
+(require 'org)
+
+(setq org-src-fontify-natively t)
+;; 设置默认 Org Agenda 文件目录
+(setq org-agenda-files '("~/Dropbox/org/"))
+;; 设置 org-agenda 打开快捷键
+(global-set-key (kbd "C-c a") 'org-agenda)
+(org-babel-do-load-languages
+    'org-babel-load-languages '((python . t) (R . t)))
+
+(require 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+#+END_SRC
 
 * Init All Packages
 
@@ -488,56 +507,6 @@ Type over a selected region, instead of deleting before typing
   (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode)
   (add-hook 'vc-dir-mode-hook 'turn-on-diff-hl-mode))
 
-(use-package smerge-mode
-  :bind (("C-c m" . jethro/hydra-smerge/body))
-  :init
-  (progn
-    (defun jethro/enable-smerge-maybe ()
-      "Auto-enable `smerge-mode' when merge conflict is detected."
-      (save-excursion
-        (goto-char (point-min))
-        (when (re-search-forward "^<<<<<<< " nil :noerror)
-          (smerge-mode 1))))
-    (add-hook 'find-file-hook #'jethro/enable-smerge-maybe :append))
-  :config 
-  (defalias 'smerge-keep-upper 'smerge-keep-mine)
-  (defalias 'smerge-keep-lower 'smerge-keep-other)
-  (defalias 'smerge-diff-base-upper 'smerge-diff-base-mine)
-  (defalias 'smerge-diff-upper-lower 'smerge-diff-mine-other)
-  (defalias 'smerge-diff-base-lower 'smerge-diff-base-other)
-
-  (defhydra jethro/hydra-smerge (:color pink
-                                        :hint nil
-                                        :pre (smerge-mode 1)
-                                        ;; Disable `smerge-mode' when quitting hydra if
-                                        ;; no merge conflicts remain.
-                                        :post (smerge-auto-leave))
-    "
-   ^Move^       ^Keep^               ^Diff^                 ^Other^
-   ^^-----------^^-------------------^^---------------------^^-------
-   _n_ext       _b_ase               _<_: upper/base        _C_ombine
-   _p_rev       _u_pper              _=_: upper/lower       _r_esolve
-   ^^           _l_ower              _>_: base/lower        _k_ill current
-   ^^           _a_ll                _R_efine
-   ^^           _RET_: current       _E_diff
-   "
-    ("n" smerge-next)
-    ("p" smerge-prev)
-    ("b" smerge-keep-base)
-    ("u" smerge-keep-upper)
-    ("l" smerge-keep-lower)
-    ("a" smerge-keep-all)
-    ("RET" smerge-keep-current)
-    ("\C-m" smerge-keep-current)
-    ("<" smerge-diff-base-upper)
-    ("=" smerge-diff-upper-lower)
-    (">" smerge-diff-base-lower)
-    ("R" smerge-refine)
-    ("E" smerge-ediff)
-    ("C" smerge-combine-with-next)
-    ("r" smerge-resolve)
-    ("k" smerge-kill-current)
-    ("q" nil "cancel" :color blue)))
 #+END_SRC
   
 * Tools
@@ -853,32 +822,6 @@ Type over a selected region, instead of deleting before typing
    
 ** Swift
 #+BEGIN_SRC emacs-lisp
-
-;;(require 'company-sourcekit)
-;;(add-to-list 'company-backends 'company-sourcekit)
-(eval-after-load 'flycheck '(flycheck-swift-setup))
-(setq flycheck-swift-sdk-path "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.2.sdk")
-;; ↑ Select the appropriate SDK version you use
-(setq flycheck-swift-target "arm64-apple-ios11")
-
-#+END_SRC
-* Org Mode
-
-#+BEGIN_SRC emacs-lisp
-;; org configuation
-
-(require 'org)
-
-(setq org-src-fontify-natively t)
-;; 设置默认 Org Agenda 文件目录
-(setq org-agenda-files '("~/Dropbox/org/"))
-;; 设置 org-agenda 打开快捷键
-(global-set-key (kbd "C-c a") 'org-agenda)
-(org-babel-do-load-languages
-    'org-babel-load-languages '((python . t) (R . t)))
-
-(require 'org-bullets)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 #+END_SRC
 
