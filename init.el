@@ -1,4 +1,4 @@
-;;;; Added by Package.el.  This must come before configurations of
+;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
 ;; You may delete these explanatory comments.
@@ -13,7 +13,6 @@
 (require 'cl)
 (require 'package)
 (add-to-list 'package-archives (cons "melpa" "http://melpa.org/packages/") t)
-
 
 ;; Add package that you want to install before launch your emacs
 ;; Find Executable Path on OS X
@@ -59,7 +58,6 @@
 
   (diminish 'auto-revert-mode)
   (global-auto-revert-mode 1)
-
 
 ;; Use y/n over yes/no
 
@@ -390,7 +388,6 @@
 ;;  (defalias 'smerge-diff-base-upper 'smerge-diff-base-mine)
 ;;  (defalias 'smerge-diff-upper-lower 'smerge-diff-mine-other)
 ;;  (defalias 'smerge-diff-base-lower 'smerge-diff-base-other)
-;;
 ;;  (defhydra jethro/hydra-smerge (:color pink
 ;;                                        :hint nil
 ;;                                        :pre (smerge-mode 1)
@@ -423,7 +420,7 @@
 ;;    ("r" smerge-resolve)
 ;;    ("k" smerge-kill-current)
 ;;    ("q" nil "cancel" :color blue)))
-  
+
 ;;;; Tools
 
 ;; Rest Client
@@ -443,6 +440,7 @@
 ;;;; Project Management
   
 ;; Projectile
+    (global-set-key (kbd "C-x g") 'magit-status) 
 
     ;; projectile config
     (use-package projectile
@@ -584,9 +582,13 @@
 (provide 'protobuf)
 
 
+;; cucumber BDD
+
+(require 'feature-mode)
+(add-to-list 'auto-mode-alist '("\.feature$" . feature-mode))
+(setq feature-step-search-path "src/main/**/*Steps.java")
 
 ;; Python
-
 
     (elpy-enable)
     (setq elpy-rpc-python-command "python3")
@@ -607,6 +609,10 @@
                   ("C-c p a" . pytest-pdb-all)
                   ("C-c p m" . pytest-pdb-module)
                   ("C-c p ." . pytest-pdb-one)))
+
+    (setq ein:jupyter-default-notebook-directory "/Users/jerryzhao/Envs/notebook/")
+    (setq ein:jupyter-default-server-command "/usr/local/bin/jupyter")
+    (setq ein:use-auto-complete t)
 
    ;; (use-package highlight-indent-guides
    ;;   :init
@@ -693,24 +699,172 @@
 
    
 ;; Org Mode
-
 ;; org configuation
-
 (require 'org)
 
+(setq org-directory "~/Dropbox/org/")
+
+(setq org-refile-use-outline-path t)
+(setq org-goto-interface 'outline-path-completion)
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-allow-creating-parent-nodes 'confirm)
+
+(global-set-key (kbd "C-c g") 'counsel-org-goto-all)
+(global-set-key (kbd "C-c o") 
+                (lambda () (interactive) (find-file "~/Dropbox/org/inbox.org")))
+(ido-mode)
+(setq org-completion-use-ido t)
+;; set org capture
+(defun air-org-task-capture ()
+  "Capture a task with my default template."
+  (interactive)
+  (org-capture nil "a"))
+(define-key global-map (kbd "C-c c") 'air-org-task-capture)
+;; org capture templates
+(setq org-capture-templates
+      '(("a" "My TODO task format." entry
+	 (file "todo.org")
+         "* TODO %?
+SCHEDULED: %t")))
 (setq org-src-fontify-natively t)
-;; 设置默认 Org Agenda 文件目录
-(setq org-agenda-files '("~/Dropbox/org/"))
 ;; 设置 org-agenda 打开快捷键
 (global-set-key (kbd "C-c a") 'org-agenda)
 (org-babel-do-load-languages
     'org-babel-load-languages '((python . t) (R . t)))
+(setq org-todo-keywords
+      '((sequence "TODO" "IN-PROGRESS" "WAITING" "|" "DONE" "CANCELED")))
+(defun air-pop-to-org-agenda (split)
+  "Visit the org agenda, in the current window or a SPLIT."
+  (interactive "P")
+  (org-agenda-list)
+  (when (not split)
+    (delete-other-windows)))
+(define-key global-map (kbd "C-c t a") 'air-pop-to-org-agenda)
+(setq org-agenda-text-search-extra-files '(agenda-archives))
+(setq org-blank-before-new-entry (quote ((heading) (plain-list-item))))
+(setq org-enforce-todo-dependencies t)
+(setq org-log-done (quote time))
+(setq org-log-redeadline (quote time))
+(setq org-log-reschedule (quote time))
+(setq org-refile-targets
+      '((nil :maxlevel . 3)
+        (org-agenda-files :maxlevel . 3)))
+
+
+(defun air-org-skip-subtree-if-priority (priority)
+  "Skip an agenda subtree if it has a priority of PRIORITY.
+
+PRIORITY may be one of the characters ?A, ?B, or ?C."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+        (pri-value (* 1000 (- org-lowest-priority priority)))
+        (pri-current (org-get-priority (thing-at-point 'line t))))
+    (if (= pri-value pri-current)
+        subtree-end
+      nil)))
+(setq org-agenda-custom-commands
+      '(("c" "Simple agenda view"
+         ((tags "PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High-priority unfinished tasks:")))
+          (agenda "")
+          (alltodo ""
+                   ((org-agenda-skip-function
+                     '(or (air-org-skip-subtree-if-priority ?A)
+                          (org-agenda-skip-if nil '(scheduled deadline))))))))))
+;; used by org-clock-sum-today-by-tags
+(defun filter-by-tags ()
+   (let ((head-tags (org-get-tags-at)))
+     (member current-tag head-tags)))
+
+(defun org-clock-sum-today-by-tags (timerange &optional tstart tend noinsert)
+  (interactive "P")
+  (let* ((timerange-numeric-value (prefix-numeric-value timerange))
+         (files (org-add-archive-files (org-agenda-files)))
+         (include-tags '("ACADEMIC" "ENGLISH" "SCHOOL"
+                         "LEARNING" "OUTPUT" "OTHER"))
+         (tags-time-alist (mapcar (lambda (tag) `(,tag . 0)) include-tags))
+         (output-string "")
+         (tstart (or tstart
+                     (and timerange (equal timerange-numeric-value 4) (- (org-time-today) 86400))
+                     (and timerange (equal timerange-numeric-value 16) (org-read-date nil nil nil "Start Date/Time:"))
+                     (org-time-today)))
+         (tend (or tend
+                   (and timerange (equal timerange-numeric-value 16) (org-read-date nil nil nil "End Date/Time:"))
+                   (+ tstart 86400)))
+         h m file item prompt donesomething)
+    (while (setq file (pop files))
+      (setq org-agenda-buffer (if (file-exists-p file)
+                                  (org-get-agenda-file-buffer file)
+                                (error "No such file %s" file)))
+      (with-current-buffer org-agenda-buffer
+        (dolist (current-tag include-tags)
+          (org-clock-sum tstart tend 'filter-by-tags)
+          (setcdr (assoc current-tag tags-time-alist)
+                  (+ org-clock-file-total-minutes (cdr (assoc current-tag tags-time-alist)))))))
+    (while (setq item (pop tags-time-alist))
+      (unless (equal (cdr item) 0)
+        (setq donesomething t)
+        (setq h (/ (cdr item) 60)
+              m (- (cdr item) (* 60 h)))
+        (setq output-string (concat output-string (format "[-%s-] %.2d:%.2d\n" (car item) h m)))))
+    (unless donesomething
+      (setq output-string (concat output-string "[-Nothing-] Done nothing!!!\n")))
+    (unless noinsert
+        (insert output-string))
+    output-string))
+
+(global-set-key (kbd "C-c C-x t") 'org-clock-sum-today-by-tags)
+;; If idle for more than 15 minutes, resolve the things by asking what to do
+;; with the clock time
+(setq org-clock-idle-time 15)
+;; Show lot of clocking history so it's easy to pick items off the `C-c I` list
+(setq org-clock-history-length 23)
+
+(defun eos/org-clock-in ()
+  (interactive)
+  (org-clock-in '(4)))
+
+(global-set-key (kbd "C-c I") #'eos/org-clock-in)
+(global-set-key (kbd "C-c O") #'org-clock-out)
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+;; Do not prompt to resume an active clock, just resume it
+(setq org-clock-persist-query-resume nil)
+;; Change tasks to whatever when clocking in
+;;(setq org-clock-in-switch-to-state "NEXT")
+;; Save clock data and state changes and notes in the LOGBOOK drawer
+(setq org-clock-into-drawer t)
+;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks
+;; with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+;; Enable auto clock resolution for finding open clocks
+(setq org-clock-auto-clock-resolution (quote when-no-clock-is-running))
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+;; use pretty things for the clocktable
+(setq org-pretty-entities t)
+;; Set default column view headings: Task Priority Effort Clock_Summary
+(setq org-columns-default-format "%50ITEM(Task) %2PRIORITY %10Effort(Effort){:} %10CLOCKSUM")
+
+
 
 ;; Evil Mode
-
   (evil-mode t)
   (setcdr evil-insert-state-map nil)
   (define-key evil-insert-state-map [escape] 'evil-normal-state)
+    (evil-define-key 'normal java-mode-map
+    (kbd "g d") 'meghanada-jump-declaration)
+    (evil-define-key 'normal java-mode-map
+    (kbd "g o") 'meghanada-back-jump)
+    (evil-define-key 'normal java-mode-map
+      (kbd "C-o") 'dumb-jump-back)
+
   (global-evil-leader-mode)
   (evil-leader/set-key
     "ff" 'find-file
@@ -723,7 +877,10 @@
     "ww" 'ace-window
     "wd" 'ace-delete-window
     "wm" 'ace-maximize-window
+    "bb" 'switch-to-buffer
     )
+
+
 
 ;; Auto YASnippets
 
@@ -803,6 +960,26 @@ the frame and makes it a dedicated window for that buffer."
       (kill-buffer buffer))))
 
 (put 'dired-find-alternate-file 'disabled nil)
+
+;; Blog
+(require 'yasnippet)
+(yas-global-mode 1)
+
+(setq org-publish-project-alist
+      '(("iquicktest"
+         ;; Path to org files.
+         :base-directory "~/iquicktest.github.io/org"
+         :base-extension "org"
+
+         ;; Path to Jekyll Posts
+         :publishing-directory "~/iquicktest.github.io/_posts/"
+         :recursive t
+         :publishing-function org-html-publish-to-html
+         :headline-levels 4
+         :html-extension "html"
+         :body-only t
+         )))
+
 
 
 (setq custom-file "~/.emacs.d/custom.el")

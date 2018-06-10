@@ -22,9 +22,12 @@
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(nyan-bar-length 35)
  '(nyan-mode nil)
+ '(org-agenda-files
+   (quote
+    ("~/Dropbox/org/routines.org" "~/Dropbox/org/task.org" "~/Dropbox/org/reading.org" "~/Dropbox/org/projects.org" "~/Dropbox/org/working.org" "~/Dropbox/org/inbox.org")))
  '(package-selected-packages
    (quote
-    (elpy lsp-python hc-zenburn-theme labburn-theme rainbow-identifiers rainbow-delimiters zenburn-theme org-bullets org bongo company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme)))
+    (ein htmlize ivy-todo feature-mode gorepl-mode evil-collection hydra elpy lsp-python hc-zenburn-theme labburn-theme rainbow-identifiers rainbow-delimiters zenburn-theme org-bullets org bongo company-lsp lsp-ui lsp-java gruvbox-theme nyan-mode company hungry-delete swiper counsel smartparens js2-mode nodejs-repl exec-path-from-shell monokai-theme)))
  '(pdf-tools-handle-upgrades nil)
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(sml/no-confirm-load-theme t))
