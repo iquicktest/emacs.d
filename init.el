@@ -216,7 +216,7 @@
     :bind* (("M-s" . rg)))
 
 ;; load theme
-(load-theme 'gruvbox 1)
+(load-theme 'gruvbox-dark-soft 1)
 
 
 ;; swap meta and super key 
@@ -458,7 +458,8 @@
         (projectile-save-known-projects))
       (use-package counsel-projectile
         :bind (("C-c b" . counsel-projectile-switch-to-buffer)
-               ("C-c s" . counsel-projectile-rg)))
+               ("C-c s" . counsel-projectile-rg)
+	       ))
       ;; use git grep to ignore files
       (setq projectile-use-git-grep t)
       ;; use ivy as completion system
@@ -613,6 +614,7 @@
     (setq ein:jupyter-default-notebook-directory "/Users/jerryzhao/Envs/notebook/")
     (setq ein:jupyter-default-server-command "/usr/local/bin/jupyter")
     (setq ein:use-auto-complete t)
+    (setq ein:completion-backend 'ein:use-company-backend)
 
    ;; (use-package highlight-indent-guides
    ;;   :init
@@ -665,17 +667,28 @@
 
 
 ;;;; Markdown
+;;(use-package markdown-mode
+;;  :mode ("\\.md\\'" . markdown-mode)
+;;  :commands (markdown-mode gfm-mode)
+;;  :init
+;;  (setq markdown-fontify-code-blocks-natively t)
+;;  :config 
+;;  (setq markdown-command "/usr/local/bin/multimarkdown --Snippet --smart --notes"
+;;        markdown-enable-wiki-links t
+;;        markdown-indent-on-enter 'indent-and-new-item
+;;        markdown-asymmetric-header t
+;;        markdown-live-preview-delete-export 'delete-on-destroy))
 (use-package markdown-mode
-  :mode ("\\.md\\'" . markdown-mode)
+  :ensure t
   :commands (markdown-mode gfm-mode)
-  :init
-  (setq markdown-fontify-code-blocks-natively t)
-  :config 
-  (setq markdown-command "multimarkdown --snippet --smart --notes"
-        markdown-enable-wiki-links t
-        markdown-indent-on-enter 'indent-and-new-item
-        markdown-asymmetric-header t
-        markdown-live-preview-delete-export 'delete-on-destroy))
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"
+	      markdown-enable-wiki-links t
+	      markdown-indent-on-enter 'indent-and-new-item
+	      markdown-asymmetric-header t
+	      ))
 
 ;; YAML
 (require 'yaml-mode)
@@ -858,7 +871,6 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
   (evil-mode t)
   (setcdr evil-insert-state-map nil)
   (define-key evil-insert-state-map [escape] 'evil-normal-state)
-  (define-key evil-normal-state-map "f" 'avy-goto-line)
     (evil-define-key 'normal java-mode-map
     (kbd "g d") 'meghanada-jump-declaration)
     (evil-define-key 'normal java-mode-map
@@ -873,6 +885,7 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
     "pd" 'counsel-projectile-find-dir
     "pf" 'counsel-projectile-find-file
     "pb" 'counsel-projectile-switch-to-buffer
+    "pp" 'projectile-switch-project
     "ps" 'counsel-projectile-rg
     "wv" 'split-window-right
     "ws" 'split-window-below
@@ -880,7 +893,8 @@ PRIORITY may be one of the characters ?A, ?B, or ?C."
     "wd" 'ace-delete-window
     "wm" 'ace-maximize-window
     "bb" 'ivy-switch-buffer
-    "j" 'avy-goto-char
+    "l" 'avy-goto-line
+    "f" 'avy-goto-char
     )
 
 ;; Auto YASnippets
@@ -1067,6 +1081,9 @@ the frame and makes it a dedicated window for that buffer."
            (insert filename))))
   
   (global-set-key (kbd "C-c 1") 'my-insert-file-name)
+
+
+
 
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file)
