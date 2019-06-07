@@ -13,17 +13,33 @@
 (require 'cl)
 (require 'package)
 (add-to-list 'package-archives (cons "melpa" "http://melpa.org/packages/") t)
+(require 'company)                                   ; load company mode
+; No delay in showing suggestions.
+(setq company-idle-delay 0)
+(setq company-minimum-prefix-length 1)
+(setq company-selection-wrap-around t)
+
+
+
+; Use tab key to cycle through suggestions.
+; ('tng' means 'tab and go')
+(company-tng-configure-default)
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
 
 ;; Add package that you want to install before launch your emacs
 ;; Find Executable Path on OS X
-(when (memq window-system '(mac ns))
-  (exec-path-from-shell-initialize))
 
 (eval-when-compile
   ;; Following line is not needed if use-package.el is in ~/.emacs.d
   (require 'use-package))
 
+(when (string= system-type "darwin")       
+  (setq dired-use-ls-dired nil))
+
 (setq use-package-always-ensure t)
+
+
 
 ;; load env
 ;; load $PATH env variable into emacs
@@ -96,7 +112,6 @@
 
 ;;;; Ivy config
 ;;; flx
-
 (use-package flx)
 ;; Counsel
   (use-package counsel
@@ -267,20 +282,16 @@
           (setq dumb-jump-force-searcher 'rg))
 
 ;; Make TAB work
-
 (setq tab-always-indent 'complete)
 
 
 ;; ace-jump-mode
-
 (use-package avy
   :ensure t
   :bind ("C-;" . avy-goto-char)
   :bind ("M-g l" . avy-goto-line))
 
 ;; indent 
-
-
 ;; aggressive-indent config
 ;;(use-package aggressive-indent
 ;;  :diminish aggressive-indent-mode
@@ -304,11 +315,12 @@
 
 
 ;;;; Project Management
-  
 ;; Projectile
     (global-set-key (kbd "C-x g") 'magit-status) 
 
     ;; projectile config
+    (setq projectile-project-search-path '("~/go/src/" "~/Working/"))
+
     (use-package projectile
       ;; show only the project name in mode line
       :delight '(:eval (concat " " (projectile-project-name)))
@@ -385,7 +397,6 @@
 
 
 ;; JSON 
-
 (require 'json-mode)
 
 ;; Evil Mode
@@ -394,10 +405,14 @@
   (define-key evil-insert-state-map [escape] 'evil-normal-state)
     (evil-define-key 'normal java-mode-map
     (kbd "g d") 'meghanada-jump-declaration)
+    (evil-define-key 'normal go-mode-map
+    (kbd "g d") 'godef-jump)
     (evil-define-key 'normal java-mode-map
     (kbd "g o") 'meghanada-back-jump)
     (evil-define-key 'normal java-mode-map
       (kbd "C-o") 'dumb-jump-back)
+    (evil-define-key 'normal python-mode-map
+    (kbd "g d") 'elpy-goto-definition)
 
 
 
@@ -416,7 +431,7 @@
     "wd" 'ace-delete-window
     "wm" 'ace-maximize-window
     "bb" 'ivy-switch-buffer
-    "ll" 'avy-goto-line
+    "l" 'avy-goto-line
     )
 
 
@@ -427,6 +442,46 @@
   (elpy-enable))
 
 (setq elpy-rpc-python-command "python3")
+
+;; lang, golang setting
+(require 'go-mode)
+(add-hook 'before-save-hook 'gofmt-before-save)
+(add-to-list 'auto-mode-alist '("\\.go\\'" . go-mode))
+(add-hook 'go-mode-hook (lambda ()
+                          (set (make-local-variable 'company-backends) '(company-go))
+                          (company-mode)))
+
+
+
+;; for golang autocomplete
+(require 'company-go)   
+
+
+;; java language config
+(require 'meghanada)
+(add-hook 'java-mode-hook
+          (lambda ()
+            ;; meghanada-mode on
+            (meghanada-mode t)
+            ;; enable telemetry
+            (meghanada-telemetry-enable t)
+            (flycheck-mode +1)
+            (setq c-basic-offset 2)
+            ;; use code format
+            (add-hook 'before-save-hook 'meghanada-code-beautify-before-save)))
+(cond
+   ((eq system-type 'windows-nt)
+    (setq meghanada-java-path (expand-file-name "bin/java.exe" (getenv "JAVA_HOME")))
+    (setq meghanada-maven-path "mvn.cmd"))
+   (t
+    (setq meghanada-java-path "java")
+    (setq meghanada-maven-path "mvn")))
+
+
+;; docker setting
+(use-package docker
+  :ensure t
+  :bind ("C-c d" . docker))
 
 
 (custom-set-variables
@@ -439,7 +494,7 @@
     ("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" default)))
  '(package-selected-packages
    (quote
-    (magit elpy use-package smartparens rg nyan-mode hungry-delete gruvbox-theme flx exec-path-from-shell diminish counsel company))))
+    (groovy-mode docker meghanada go-autocomplete company-go go-mode magit elpy use-package smartparens rg nyan-mode hungry-delete gruvbox-theme flx exec-path-from-shell diminish counsel company))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
