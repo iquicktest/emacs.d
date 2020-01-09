@@ -268,7 +268,6 @@
   :config
   (add-to-list 'golden-ratio-extra-commands 'ace-window))
 
-(add-to-list 'window-size-change-functions 'golden-ratio)
 
 ;; rainbow stuff
 (use-package rainbow-delimiters
@@ -277,6 +276,10 @@
 (use-package rainbow-identifiers
   :init
   (add-hook 'prog-mode-hook 'rainbow-identifiers-mode))
+
+(define-advice select-window (:after (window &optional no-record) golden-ratio-resize-window)
+    (golden-ratio)
+    nil)
 
 
 ;;;; Editing Text
