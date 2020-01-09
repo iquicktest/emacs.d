@@ -20,6 +20,9 @@
 (setq company-selection-wrap-around t)
 
 
+(when (eq system-type 'darwin) (ns-auto-titlebar-mode))
+
+
 
 ; Use tab key to cycle through suggestions.
 ; ('tng' means 'tab and go')
@@ -27,6 +30,16 @@
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
 
+;;;;Org mode configuration
+;; Enable Org mode
+(require 'org)
+;; Make Org mode work with files ending in .org
+(add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+(define-key global-map "\C-cl" 'org-store-link)
+(define-key global-map "\C-ca" 'org-agenda)
+(setq org-agenda-files (directory-files-recursively "~/org" "\\.org$"))
+(setq org-log-done t)
+;; The above is the default in recent emacsen
 ;; Add package that you want to install before launch your emacs
 ;; Find Executable Path on OS X
 
@@ -47,6 +60,9 @@
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-env "GOPATH"))
 
+(use-package direnv
+ :config
+ (direnv-mode))
 
 ;;;; == better defaults ==
 ;; Help 
@@ -100,7 +116,6 @@
 
 
 ;; company mode config
-
 (global-company-mode 1)
 ;; change company C-n C-p to adjust up and down
 (with-eval-after-load 'company
@@ -181,9 +196,6 @@
   (use-package rg
     :bind* (("M-s" . rg)))
 
-;; load theme
-(load-theme 'gruvbox-dark-soft 1)
-
 
 ;; swap meta and super key 
 ;; swap meta and super key and change swith language
@@ -256,6 +268,8 @@
   :config
   (add-to-list 'golden-ratio-extra-commands 'ace-window))
 
+(add-to-list 'window-size-change-functions 'golden-ratio)
+
 ;; rainbow stuff
 (use-package rainbow-delimiters
   :init
@@ -314,12 +328,24 @@
     '(add-to-list 'company-backends 'company-restclient)))
 
 
+(use-package kubernetes
+  :ensure t
+  :commands (kubernetes-overview))
+
+;; If you want to pull in the Evil compatibility package.
+(use-package kubernetes-evil
+  :ensure t
+  :after kubernetes)
+
 ;;;; Project Management
 ;; Projectile
     (global-set-key (kbd "C-x g") 'magit-status) 
+    (global-set-key (kbd "C-c k") 'kubernetes-overview) 
+
+    (require 'evil-magit)
 
     ;; projectile config
-    (setq projectile-project-search-path '("~/go/src/" "~/Working/"))
+    (setq projectile-project-search-path '("~/go/src/" "~/Working/" "~/org/" "~/Learning/" "~/spike/spikes/" "~/working/py3/"))
 
     (use-package projectile
       ;; show only the project name in mode line
@@ -353,47 +379,47 @@
 
 ;;;; Modeline
 ;; Smart mode line
-(use-package smart-mode-line
-  :init
-  (add-hook 'after-init-hook 'sml/setup)
-  :config 
-  (setq sml/theme 'respectful)
-  (setq sml/name-width 24)
-  (setq sml/shorten-directory t)
-  (setq sml/shorten-modes t)
-  (setq sml/mode-width 'full)
-  (setq sml/replacer-regexp-list
-        '(("^~/\\.emacs\\.d/" ":ED:"))))
-
-(defmacro diminish-minor-mode (filename mode &optional abbrev)
-  `(eval-after-load (symbol-name ,filename)
-     '(diminish ,mode ,abbrev)))
-
-(defmacro diminish-major-mode (mode-hook abbrev)
-  `(add-hook ,mode-hook
-             (lambda () (setq mode-name ,abbrev))))
-
-(diminish-minor-mode 'abbrev 'abbrev-mode)
-(diminish-minor-mode 'simple 'auto-fill-function)
-(diminish-minor-mode 'company 'company-mode)
-(diminish-minor-mode 'eldoc 'eldoc-mode)
-(diminish-minor-mode 'flycheck 'flycheck-mode)
-(diminish-minor-mode 'flyspell 'flyspell-mode)
-(diminish-minor-mode 'global-whitespace 'global-whitespace-mode)
-(diminish-minor-mode 'projectile 'projectile-mode)
-(diminish-minor-mode 'ruby-end 'ruby-end-mode)
-(diminish-minor-mode 'subword 'subword-mode)
-(diminish-minor-mode 'undo-tree 'undo-tree-mode)
-(diminish-minor-mode 'yard-mode 'yard-mode)
-(diminish-minor-mode 'yasnippet 'yas-minor-mode)
-(diminish-minor-mode 'wrap-region 'wrap-region-mode)
-
-(diminish-minor-mode 'paredit 'paredit-mode " π")
-
-(diminish-major-mode 'emacs-lisp-mode-hook "el")
-(diminish-major-mode 'haskell-mode-hook "λ=")
-(diminish-major-mode 'lisp-interaction-mode-hook "λ")
-(diminish-major-mode 'python-mode-hook "Py")
+;;(use-package smart-mode-line
+;;  :init
+;;  (add-hook 'after-init-hook 'sml/setup)
+;;  :config 
+;;  (setq sml/theme 'respectful)
+;;  (setq sml/name-width 24)
+;;  (setq sml/shorten-directory t)
+;;  (setq sml/shorten-modes t)
+;;  (setq sml/mode-width 'full)
+;;  (setq sml/replacer-regexp-list
+;;        '(("^~/\\.emacs\\.d/" ":ED:"))))
+;;
+;;(defmacro diminish-minor-mode (filename mode &optional abbrev)
+;;  `(eval-after-load (symbol-name ,filename)
+;;     '(diminish ,mode ,abbrev)))
+;;
+;;(defmacro diminish-major-mode (mode-hook abbrev)
+;;  `(add-hook ,mode-hook
+;;             (lambda () (setq mode-name ,abbrev))))
+;;
+;;(diminish-minor-mode 'abbrev 'abbrev-mode)
+;;(diminish-minor-mode 'simple 'auto-fill-function)
+;;(diminish-minor-mode 'company 'company-mode)
+;;(diminish-minor-mode 'eldoc 'eldoc-mode)
+;;(diminish-minor-mode 'flycheck 'flycheck-mode)
+;;(diminish-minor-mode 'flyspell 'flyspell-mode)
+;;(diminish-minor-mode 'global-whitespace 'global-whitespace-mode)
+;;(diminish-minor-mode 'projectile 'projectile-mode)
+;;(diminish-minor-mode 'ruby-end 'ruby-end-mode)
+;;(diminish-minor-mode 'subword 'subword-mode)
+;;(diminish-minor-mode 'undo-tree 'undo-tree-mode)
+;;(diminish-minor-mode 'yard-mode 'yard-mode)
+;;(diminish-minor-mode 'yasnippet 'yas-minor-mode)
+;;(diminish-minor-mode 'wrap-region 'wrap-region-mode)
+;;
+;;(diminish-minor-mode 'paredit 'paredit-mode " π")
+;;
+;;(diminish-major-mode 'emacs-lisp-mode-hook "el")
+;;(diminish-major-mode 'haskell-mode-hook "λ=")
+;;(diminish-major-mode 'lisp-interaction-mode-hook "λ")
+;;(diminish-major-mode 'python-mode-hook "Py")
 
 
 ;; JSON 
@@ -423,6 +449,7 @@
     "pd" 'counsel-projectile-find-dir
     "pf" 'counsel-projectile-find-file
     "pb" 'counsel-projectile-switch-to-buffer
+    "po" 'org-projectile-project-todo-completing-read
     "pp" 'projectile-switch-project
     "ps" 'counsel-projectile-rg
     "wv" 'split-window-right
@@ -432,6 +459,8 @@
     "wm" 'ace-maximize-window
     "bb" 'ivy-switch-buffer
     "l" 'avy-goto-line
+    ">" 'org-narrow-to-subtree
+    "<" 'widen
     )
 
 
@@ -478,23 +507,219 @@
     (setq meghanada-maven-path "mvn")))
 
 
+
+
 ;; docker setting
 (use-package docker
   :ensure t
   :bind ("C-c d" . docker))
+(setq evil-emacs-state-modes (append evil-emacs-state-modes '(docker-container-mode docker-image-mode docker-volume-mode docker-network-mode docker-machine-mode)))
 
+
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
+(require 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+(require 'org-projectile)
+(org-projectile-per-project)
+(setq org-projectile-per-project-filepath "project_todo.org")
+(setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
+
+
+;; leetcode setting
+(setq leetcode-prefer-language "python3")
+
+;; neotree
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
+
+
+
+;; doome theme################3
+(use-package doom-themes
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (doom-themes-treemacs-config)
+  
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+
+ ;;doom-bar
+ ;;How tall the mode-line should be. It's only respected in GUI.
+ ;;If the actual char height is larger, it respects the actual height.
+
+;; load theme
+(load-theme 'doom-one 1)
+
+(setq doom-modeline-height 25)
+
+;;How wide the mode-line bar should be. It's only respected in GUI.
+(setq doom-modeline-bar-width 3)
+
+;; How to detect the project root.
+;; The default priority of detection is `ffip' > `projectile' > `project'.
+;; nil means to use `default-directory'.
+;; The project management packages have some issues on detecting project root.
+;; e.g. `projectile' doesn't handle symlink folders well, while `project' is unable
+;; to hanle sub-projects.
+;; You can specify one if you encounter the issue.
+(setq doom-modeline-project-detection 'projectile)
+
+
+(add-to-list 'load-path "~/.emacs.d/multi-magit/")
+(load "multi-magit")
+(magit-add-section-hook 'magit-status-sections-hook
+                        'multi-magit-insert-repos-overview
+                         nil t)
+
+
+;; Determines the style used by `doom-modeline-buffer-file-name'.
+;;
+;; Given ~/Projects/FOSS/emacs/lisp/comint.el
+;;   truncate-upto-project => ~/P/F/emacs/lisp/comint.el
+;;   truncate-from-project => ~/Projects/FOSS/emacs/l/comint.el
+;;   truncate-with-project => emacs/l/comint.el
+;;   truncate-except-project => ~/P/F/emacs/l/comint.el
+;;   truncate-upto-root => ~/P/F/e/lisp/comint.el
+;;   truncate-all => ~/P/F/e/l/comint.el
+;;   relative-from-project => emacs/lisp/comint.el
+;;   relative-to-project => lisp/comint.el
+;;   file-name => comint.el
+;;   buffer-name => comint.el<2> (uniquify buffer name)
+;;
+;; If you are experiencing the laggy issue, especially while editing remote files
+;; with tramp, please try `file-name' style.
+;; Please refer to https://github.com/bbatsov/projectile/issues/657.
+(setq doom-modeline-buffer-file-name-style 'truncate-upto-project)
+
+;; Whether display icons in mode-line. Respects `all-the-icons-color-icons'.
+;; While using the server mode in GUI, should set the value explicitly.
+(setq doom-modeline-icon (display-graphic-p))
+
+;; Whether display the icon for `major-mode'. Respects `doom-modeline-icon'.
+(setq doom-modeline-major-mode-icon t)
+
+;; Whether display the colorful icon for `major-mode'.
+;; Respects `doom-modeline-major-mode-icon'.
+(setq doom-modeline-major-mode-color-icon t)
+
+;; Whether display the icon for the buffer state. It respects `doom-modeline-icon'.
+(setq doom-modeline-buffer-state-icon t)
+
+;; Whether display the modification icon for the buffer.
+;; Respects `doom-modeline-icon' and `doom-modeline-buffer-state-icon'.
+(setq doom-modeline-buffer-modification-icon t)
+
+;; Whether to use unicode as a fallback (instead of ASCII) when not using icons.
+(setq doom-modeline-unicode-fallback nil)
+
+;; Whether display the minor modes in mode-line.
+(setq doom-modeline-minor-modes nil)
+
+;; If non-nil, a word count will be added to the selection-info modeline segment.
+(setq doom-modeline-enable-word-count nil)
+
+;; Major modes in which to display word count continuously.
+;; Also applies to any derived modes. Respects `doom-modeline-enable-word-count'.
+;; If it brings the sluggish issue, disable `doom-modeline-enable-word-count' or
+;;remove the modes from `doom-modeline-continuous-word-count-modes'.
+(setq doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode))
+
+;; Whether display the buffer encoding.
+(setq doom-modeline-buffer-encoding t)
+
+;; Whether display the indentation information.
+(setq doom-modeline-indent-info nil)
+
+;; If non-nil, only display one number for checker information if applicable.
+(setq doom-modeline-checker-simple-format t)
+
+;; The maximum number displayed for notifications.
+(setq doom-modeline-number-limit 99)
+
+;; The maximum displayed length of the branch name of version control.
+(setq doom-modeline-vcs-max-length 12)
+
+;; Whether display the perspective name. Non-nil to display in mode-line.
+(setq doom-modeline-persp-name t)
+
+;; If non nil the default perspective name is displayed in the mode-line.
+(setq doom-modeline-display-default-persp-name nil)
+
+;; Whether display the `lsp' state. Non-nil to display in mode-line.
+(setq doom-modeline-lsp t)
+
+;; Whether display the modal state icon.
+;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
+(setq doom-modeline-modal-icon t)
+
+;; Whether display the mu4e notifications. It requires `mu4e-alert' package.
+(setq doom-modeline-mu4e nil)
+
+;; Whether display the gnus notifications.
+(setq doom-modeline-gnus t)
+
+;;Wheter gnus should automatically be updated and how often (set to nil to disable)
+(setq doom-modeline-gnus-timer 2)
+
+;; Whether display the IRC notifications. It requires `circe' or `erc' package.
+(setq doom-modeline-irc t)
+
+;; Function to stylize the irc buffer names.
+(setq doom-modeline-irc-stylize 'identity)
+
+;; Whether display the environment version.
+(setq doom-modeline-env-version t)
+;; Or for individual languages
+(setq doom-modeline-env-enable-python t)
+(setq doom-modeline-env-enable-ruby t)
+(setq doom-modeline-env-enable-go t)
+
+;; Change the executables to use for the language version string
+(setq doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
+(setq doom-modeline-env-go-executable "go")
+
+;; What to dispaly as the version while a new one is being loaded
+(setq doom-modeline-env-load-string "...")
+
+;; Hooks that run before/after the modeline version string is updated
+(setq doom-modeline-before-update-env-hook nil)
+(setq doom-modeline-after-update-env-hook nil)
+
+(setq org-hide-emphasis-markers t)
+(setq magit-repository-directories
+      '(("~/Working/" . 1)))
+
+(use-package doom-modeline
+      :ensure t
+      :hook (after-init . doom-modeline-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-safe-themes
+ '(org-agenda-files
    (quote
-    ("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" default)))
+    ("/Users/sgjerry.zhao/org/goals/goals_2019.org" "/Users/sgjerry.zhao/org/goals/project_todo.org" "/Users/sgjerry.zhao/org/snippets/infra_notes.org" "/Users/sgjerry.zhao/org/projects.org")))
  '(package-selected-packages
    (quote
-    (groovy-mode docker meghanada go-autocomplete company-go go-mode magit elpy use-package smartparens rg nyan-mode hungry-delete gruvbox-theme flx exec-path-from-shell diminish counsel company))))
+    (evil-magit spinner leetcode ns-auto-titlebar restclient-test company-restclient monokai-pro-theme x509-mode projectile-direnv direnv org-projectile k8s-mode kubernetes-evil kubernetes org-bullets groovy-mode docker meghanada go-autocomplete company-go go-mode magit elpy use-package smartparens rg nyan-mode hungry-delete gruvbox-theme flx exec-path-from-shell diminish counsel company)))
+ '(pdf-view-midnight-colors (quote ("#fdf4c1" . "#32302f")))
+ '(x509-openssl-cmd "/usr/bin/openssl"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
